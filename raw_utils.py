@@ -23,7 +23,7 @@ def check_text_types(message):
     bool
         True if text types are detected, False otherwise.
     """
-    type_list = ["text/plain", "text/html"]
+    type_list = ['text/plain', 'text/html']
     content_type = message.get_content_type()
     if any(types in content_type for types in type_list):
         return True
@@ -81,7 +81,7 @@ def mbox_to_df(filename, filepath, text_only=True):
         else:
             content = message.get_payload(decode=True)
 
-        row["Body"] = content
+        row['Body'] = content
 
         data.append(row)
         
@@ -121,7 +121,7 @@ def read_dataset(path, exceptions, text_only=True):
     
     dataset = pd.DataFrame()
     for file in mbox_files:
-        print("Now reading file: ", file)
+        print("Now reading file:", file)
         file_data = mbox_to_df(file, path, text_only)
         dataset = pd.concat([dataset, file_data], ignore_index=True)
     
@@ -133,7 +133,7 @@ def save_to_csv(data, path, filename):
     Save a DataFrame to a .csv file.
 
     The operation happens only if the file does not exist already. If it
-    does, it will overwrite if the user authorizes it.
+    does, it will overwrite only if the user authorizes it.
 
     Parameters
     ----------
@@ -145,16 +145,15 @@ def save_to_csv(data, path, filename):
         The name of the .csv file.
     """
     attempted_filename = os.path.join(path, filename)
-    if(os.path.exists(attempted_filename)):
-        print('File ' + attempted_filename + ' already exists.')
-        overwrite = input('Do you want to overwrite it? (y/n) ')
-        if(overwrite == 'Y' or overwrite == 'y'):
-            print('File ' + attempted_filename + ' will be overwritten.')
+    if os.path.exists(attempted_filename):
+        print("File", attempted_filename, "already exists.")
+        overwrite = input("Do you want to overwrite it? (y/n) ")
+        if (overwrite == 'Y' or overwrite == 'y'):
+            print("File", attempted_filename, "will be overwritten.")
             data.to_csv(os.path.join(path, filename))
         else:
-            
-            print('Aborting, data will not be written.')
+            print("Aborting, data will not be written.")
     else:
-        print('Saving to ' + attempted_filename)
+        print("Saving to", attempted_filename)
         data.to_csv(os.path.join(path, filename))
         
