@@ -66,7 +66,7 @@ def mbox_to_df(filename, filepath, text_only=True):
         
         row = {}    
         
-        if (!text_only):
+        if (not text_only):
             # TODO: Implement header (and other feature) extraction
             pass
         
