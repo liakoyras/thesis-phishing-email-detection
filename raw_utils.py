@@ -74,15 +74,15 @@ def mbox_to_df(filename, filepath, text_only=True):
             pass
 
         # Extracting body text
-        if message.is_multipart():
-            content = ''
-            for part in message.get_payload():
-                if check_text_types(part):
-                    content += (str(part.get_payload(decode=True)) + '\n')
+        content = ''
+        for part in message.walk():
+            if part.is_multipart():
+                continue
 
-            content = content[:-1] # Strip the final newline character
-        else:
-            content = message.get_payload(decode=True)
+            if check_text_types(part):
+                content += (part.get_payload(decode=True).decode('latin-1') + '\n')
+
+        content = content[:-1] # strips the final newline character
 
         row['Body'] = content
 
