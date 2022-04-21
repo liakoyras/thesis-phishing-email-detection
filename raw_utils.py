@@ -58,13 +58,12 @@ def mbox_to_df(filename, filepath, text_only=True):
     mbox = mailbox.mbox(file)
 
     data = []
-
+    skip_counter = 0
     for key in mbox.iterkeys():
         try:
             message = mbox[key]
         except UnicodeDecodeError:
-            print("Email skipped: A header contains non-ascii characters, "\
-                "or the email is in some other way corrupted.")
+            skip_counter += 1
             continue
 
         row = {}
@@ -87,6 +86,10 @@ def mbox_to_df(filename, filepath, text_only=True):
         row['Body'] = content
 
         data.append(row)
+
+    if (skip_counter > 0):
+        print(skip_counter, "emails skipped: Headers contain non-ascii "\
+                "characters, or otherwise corrupted email data.")
 
     dataframe = pd.DataFrame(data)
 
@@ -251,6 +254,7 @@ def sample_enron_to_mbox(path, amount, mode='number', overwrite=True):
 
     # Writing emails
     random.shuffle(email_list)
+    skip_counter = 0
     for email_file in email_list:
         if (email_number == 0):
             break
@@ -261,11 +265,14 @@ def sample_enron_to_mbox(path, amount, mode='number', overwrite=True):
                 mbox.flush()
             except UnicodeDecodeError:
 #                 print(email_file, ':')
-                print("Email skipped: A header contains non-ascii characters, "\
-                "or the email is in some other way corrupted.")
+                skip_counter += 1
                 continue
             else:
                 email_number -= 1
+
+    if (skip_counter > 0):
+        print(skip_counter, "emails skipped: Headers contain non-ascii "\
+            "characters, or otherwise corrupted email data.")
 
     mbox.unlock()
     mbox.close()
