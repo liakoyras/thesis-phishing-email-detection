@@ -4,30 +4,48 @@ from the emails into a format more suitable for use with machine
 learning algorithms.
 """
 import pandas as pd
+from bs4 import BeautifulSoup
+import re
 
-def strip_characters(input_series):
+def strip_characters(input_string):
     """
-    Strips characters from the text in a series to keep only plaintext.
+    Strips characters from a string to convert it to plaintext.
 
-    This is achieved by using regex to transform HTML characters to
-    newlines and spaces, stripping HTML tags and extra whitespace.
+    This is achieved by using regex to transform HTML line breaks
+    and Unicode non-breaking space to newlines and spaces,
+    stripping HTML tags with BeautifulSoup and remove extra
+    and trailing whitespace with regex.
+    
+    Apart from the removal of HTML, the rest of the processing is
+    done in order for the whitespace of an un-htmlified string to
+    be as standardized as possible and close to that of the
+    corresponding plaintext, in order for deduplicate_text() to
+    work properly.
 
     Parameters
     ----------
-    input_series : pandas.Series
+    input_string : str
         The series to be converted.
 
     Returns
     -------
-    pandas.Series
+    str
         The converted series.
+        
+    See Also
+    --------
+    deduplicate_text : Checks a string for duplicated text and returns it deduplicated.
     """
-    output_series = input_series.str.replace(r'<br>', '\n', regex=True, case=False)
-    output_series = output_series.str.replace(r'&nbsp;', ' ', regex=True, case=False)
-    output_series = output_series.str.replace(r'<[^<>]*>', '', regex=True)
-    output_series = output_series.str.strip().replace(r'\s+', ' ', regex=True)
+    converted_string = re.sub(r'<br>', ' ', input_string, flags=re.IGNORECASE)
+    converted_string = re.sub(r'&nbsp;', ' ', converted_string, flags=re.IGNORECASE)
     
-    return output_series
+    soup = BeautifulSoup(converted_string, 'lxml')
+    text = soup.get_text()
+    
+    output_text = re.sub(r'\s+', ' ', text)
+    output_text = output_text.strip()
+    
+    return output_text
 
 
 def deduplicate_text(input_text):
