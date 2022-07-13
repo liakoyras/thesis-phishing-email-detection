@@ -13,7 +13,7 @@ def strip_characters(input_string):
 
     This is achieved by using regex to transform HTML line breaks
     and Unicode non-breaking space to newlines and spaces,
-    stripping HTML tags with BeautifulSoup and remove extra
+    stripping HTML tags with BeautifulSoup and removing extra
     and trailing whitespace with regex.
     
     Apart from the removal of HTML, the rest of the processing is
@@ -25,12 +25,13 @@ def strip_characters(input_string):
     Parameters
     ----------
     input_string : str
-        The series to be converted.
+        The string to be converted.
 
     Returns
     -------
     str
-        The converted series.
+        The converted string (or the input string, if none of the
+        transformations are applicable).
         
     See Also
     --------
@@ -64,17 +65,17 @@ def deduplicate_text(input_text):
     text will be very closely resembling plaintext and can thus
     be directly compared to the plaintext part.
     
-    It is not 100% foolproof, but it works in most cases.
+    It is not perfect, but it works in most cases.
 
     Parameters
     ----------
-    input_series : str
+    input_text : str
         The text to be checked.
 
     Returns
     -------
     str
-        The the input or the deduplicated version if applicable.
+        The input_text or the deduplicated version if applicable.
     """
     s1 = input_text[:len(input_text)//2]
     s2 = input_text[(len(input_text)//2) + 1:]
