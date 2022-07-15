@@ -167,9 +167,9 @@ def tokenize(input_text):
     The initial NLTK tokenization produces tokens with
     punctuation marks or other special characters.
     A regex filter is then applied to throw out all such
-    tokens, keeping only alphanumeric characters (a-z & 0-9),
-    dashes (-) and apostrophes ('), so that tokens like "don't"
-    and "e-mail" are not removed.
+    tokens, keeping only alphanumeric characters (a-z and 0-9),
+    underscores (_) and dashes (-), so that tokens like "e-mail"
+    are not removed.
     
     Also, there is a conversion to lowercase.
     
@@ -185,7 +185,7 @@ def tokenize(input_text):
     """
     lowercase = input_text.lower()
     token_list = nltk.word_tokenize(lowercase)
-    clean_list = [word for word in token_list if len(re.findall(r'^[\w\'-]+$', word)) == 1]
+    clean_list = [word for word in token_list if len(re.findall(r'^[\w]+-?[\w-]*$', word)) == 1]
     
     return clean_list
 
