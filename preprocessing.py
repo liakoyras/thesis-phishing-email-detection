@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 import nltk
 nltk.download('punkt')
 
+
 def strip_characters(input_string):
     """
     Strips characters from a string to convert it to plaintext.
@@ -168,7 +169,7 @@ def tokenize(input_text):
     A regex filter is then applied to throw out all such
     tokens, keeping only alphanumeric characters (a-z & 0-9),
     dashes (-) and apostrophes ('), so that tokens like "don't"
-    and e-mail are not removed.
+    and "e-mail" are not removed.
     
     Also, there is a conversion to lowercase.
     
@@ -184,7 +185,7 @@ def tokenize(input_text):
     """
     lowercase = input_text.lower()
     token_list = nltk.word_tokenize(lowercase)
-    clean_list = [word for word in token_list if len(re.findall(r'^[\w\'-]$', word)) == 1]
+    clean_list = [word for word in token_list if len(re.findall(r'^[\w\'-]+$', word)) == 1]
     
     return clean_list
 
