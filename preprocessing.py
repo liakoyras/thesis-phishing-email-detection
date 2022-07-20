@@ -8,7 +8,9 @@ import re
 
 from bs4 import BeautifulSoup
 import nltk
+from nltk.corpus import stopwords
 nltk.download('punkt')
+nltk.download('stopwords')
 
 
 def strip_characters(input_string):
@@ -189,3 +191,22 @@ def tokenize(input_text):
     
     return clean_list
 
+
+def remove_stopwords(tokenized_text):
+    """
+    Removed stopwords from a list of words.
+        
+    Parameters
+    ----------
+    tokenized_text : list
+        The list of words to process.
+    
+    Returns
+    -------
+    list
+        The word list without the stopwords.
+    """
+    stop_words = stopwords.words('english')
+    clean_list = [word for word in tokenized_text if word not in stop_words]
+    
+    return clean_list
