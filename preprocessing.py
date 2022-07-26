@@ -9,8 +9,14 @@ import re
 from bs4 import BeautifulSoup
 import nltk
 from nltk.corpus import stopwords
+from nltk.corpus import wordnet
+from nltk.stem.wordnet import WordNetLemmatizer
+
 nltk.download('punkt')
 nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 
 def strip_characters(input_string):
@@ -182,7 +188,7 @@ def tokenize(input_text):
     
     Returns
     -------
-    list
+    list of str
         The list that contains the cleaned-up tokens.
     """
     lowercase = input_text.lower()
@@ -194,7 +200,7 @@ def tokenize(input_text):
 
 def remove_stopwords(tokenized_text):
     """
-    Removed stopwords from a list of words.
+    Remove stopwords from a list of words.
         
     Parameters
     ----------
@@ -210,3 +216,61 @@ def remove_stopwords(tokenized_text):
     clean_list = [word for word in tokenized_text if word not in stop_words]
     
     return clean_list
+
+
+def get_wordnet_pos(treebank_tag):
+    """
+    Converts a Treebank part-of-speech tag to WordNet.
+    
+    Parameters
+    ----------
+    treebank_tag : str
+        The Treebank POS tag.
+    
+    Returns
+    -------
+    str or None
+        A wordnet POS constant or None if no maping was found.
+    """
+    if treebank_tag.startswith('J'):
+        return wordnet.ADJ
+    elif treebank_tag.startswith('V'):
+        return wordnet.VERB
+    elif treebank_tag.startswith('N'):
+        return wordnet.NOUN
+    elif treebank_tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return None
+
+
+def lemmatize(token_list):
+    """
+    Lemmatizes a list of tokens using WordNet lemmatizer.
+    
+    Depending on the result of get_wordnet_pos(), the function
+    will either use a POS tag to improve lemmatization or not.
+    
+    Parameters
+    ----------
+    token_list : list of str
+        The list that contains the tokenized words.
+    
+    Returns
+    -------
+    list of str
+        A list with the lemmas of the input words.
+        
+    See Also
+    --------
+    get_wordnet_pos : Converts a Treebank part-of-speech tag to WordNet.
+    """
+    lemmatizer = WordNetLemmatizer()
+    tagged_list = nltk.pos_tag(token_list)
+    
+    lemmatized_list = [lemmatizer.lemmatize(word)
+                       if get_wordnet_pos(tag) is None
+                       else lemmatizer.lemmatize(word, pos=get_wordnet_pos(tag))
+                       for word, tag in tagged_list]
+    
+    return lemmatized_list
