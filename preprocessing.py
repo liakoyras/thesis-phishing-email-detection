@@ -193,7 +193,7 @@ def tokenize(input_text):
     """
     lowercase = input_text.lower()
     token_list = nltk.word_tokenize(lowercase)
-    clean_list = [word for word in token_list if len(re.findall(r'^[\w]+-?[\w-]*$', word)) == 1]
+    clean_list = [word for word in token_list if len(re.findall(r'^[a-zA-Z0-9]+-?[\w-]*$', word)) == 1]
     
     return clean_list
 
