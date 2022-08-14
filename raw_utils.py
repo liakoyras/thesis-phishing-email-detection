@@ -83,7 +83,7 @@ def mbox_to_df(filename, filepath, text_only=True):
 
         content = content[:-1] # strips the final newline character
 
-        row['Body'] = content
+        row['body'] = content
 
         data.append(row)
 
