@@ -5,6 +5,7 @@ feature selection.
 import pandas as pd
 
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import SelectPercentile, chi2
 
 """
 Feature Extraction
@@ -75,4 +76,62 @@ def tfidf_features(text_col_train, text_col_test=None, max_df=1.0, min_df=1, max
     else:
         output['tfidf_test'] = None
     
+    return output
+
+
+"""
+Feature Selection
+"""
+
+def chi2_feature_selection(features_train, class_col_train, features_test=None, percentile=50):
+    """
+    Select top features of a set using chi2 of scikit-learn.
+
+    The output dictionary contains the trained selector and the
+    feature arrays of the train dataset and also of the test
+    dataset, if provided.
+    
+    The percentage of features to be selected can be passed as an
+    argument, that will be passed to sklearn.SelectPercentile.
+
+    Parameters
+    ----------
+    features_train : pandas.DataFrame
+        The DataFrame containing the feature array of the train set.
+    class_col_train : pandas.Series
+        The series containing the classes of the train set emails.
+    features_test : pandas.DataFrame or None
+        The DataFrame containing the feature array of the test set,
+        or None if a test set is not provided.
+    percentile : int, default 50
+        An integer showing the percent of features to keep.
+        To be used by SelectPercentile.
+
+    Returns
+    -------
+    dict
+    {'selector': sklearn.feature_selection._univariate_selection.SelectPercentile,
+     'features_train': pandas.DataFrame
+     'features_test': pandas.DataFrame or None}
+        A dictionary that contains the selector model and the
+        reduced sets.
+    """
+    output = dict(); 
+    
+    chi2_selector = SelectPercentile(chi2, percentile=percentile)
+    
+    chi2_features_train = chi2_selector.fit_transform(features_train, class_col_train)
+    selected_features_train = pd.DataFrame(chi2_features_train, columns=chi2_selector.get_feature_names_out())
+    
+    output['selector'] = chi2_selector
+    output['features_train'] = selected_features_train
+    
+    if features_test is not None:
+        chi2_features_test = chi2_selector.transform(features_test)
+        selected_features_test = pd.DataFrame(chi2_features_test, columns=chi2_selector.get_feature_names_out())
+        
+        output['features_test'] = selected_features_test
+    else:
+        output['features_test'] = None
+        
     return output
