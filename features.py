@@ -3,9 +3,12 @@ This module contains utilities for feature extraction and
 feature selection.
 """
 import pandas as pd
+import numpy as np
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectPercentile, chi2
+
+from gensim.models import Word2Vec
 
 """
 Feature Extraction
@@ -30,7 +33,7 @@ def tfidf_features(text_col_train, text_col_test=None, max_df=1.0, min_df=1, max
     token_text_col_test : pandas.Series of list of str or None
         The series of the test set that contains the tokenized emails
         as word lists, or None if a test set is not provided.
-    max_df : float or int, default=1.0
+    max_df : float or int, default 1.0
         Ignore terms that have a frequency higher than this threshold,
         as a percentage of documents if float in range [0.0, 1.0] or
         an absolute count for int. To be used by TfidfVectorizer.
@@ -76,6 +79,120 @@ def tfidf_features(text_col_train, text_col_test=None, max_df=1.0, min_df=1, max
     else:
         output['tfidf_test'] = None
     
+    return output
+
+
+def filter_vocab_words(wordlist, vocabulary):
+    """
+    Remove words not appearing in a vocabulary from a list.
+    
+    Parameters
+    ----------
+    wordlist : list of str
+        The list of words to be filtered.
+    vocabulary : list of str
+        The vocabulary that will do the filtering.
+        
+    Returns
+    -------
+    list of str
+        The filtered list.
+    """
+    return [word for word in wordlist if word in vocabulary]
+
+def get_mean_vector(wordlist, word2vec_model):
+    """
+    Calculate the mean vector of a list of words.
+    
+    It takes the word vectors from the Word2Vec model and
+    calculates the mean of those who appear in this specific
+    list of words.
+    
+    Parameters
+    ----------
+    wordlist : list of str
+        The list of words to be vectorized.
+    word2vec_model : gensim.models.word2vec.Word2Vec
+        The Word2Vec model that produced the word vectors.
+        
+    Returns
+    -------
+    numpy.ndarray
+        An array containing the mean vector, or zeroes if
+        the input wordlist was empty.
+    """
+    if len(wordlist) >= 1:
+        return np.mean(word2vec_model.wv[wordlist], axis=0)
+    else:
+        return np.zeros(word2vec_model.vector_size)
+
+def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_count=5, max_vocab_size=None):
+    """
+    Extract Word2Vec embedding features using gensim.
+
+    Word2Vec represents each word in the corpus as a high-dimensional
+    vector. Then, get_mean_vector() is used to get the averages of
+    the vectors of all the words in an email, after removing the
+    words that do not appear in the vocabulary that Word2Vec built.
+    
+    Some parameters for the vectorizer can also be passed as
+    arguments.
+
+    Parameters
+    ----------
+    token_text_col_train : pandas.Series of list of str
+        The series that contains the tokenized emails as word lists.
+    token_text_col_test : pandas.Series of list of str or None
+        The series of the test set that contains the tokenized emails
+        as word lists, or None if a test set is not provided.
+    vector_size : int, default 100
+        The size (dimensions) of the word vectors that will be
+        produced. To be used by Word2Vec.
+    min_count : int, default 5
+        The minimum number of times a term has to appear in order to
+        be included in the vocabulary. To be used by Word2Vec.
+    max_vocab_size : int, default None
+        The maximum number of terms in the vocabulary. To be used by
+        Word2Vec.
+    
+    Returns
+    -------
+    dict
+    {'vectorizer': gensim.models.word2vec.Word2Vec,
+     'word2vec_train': pandas.DataFrame
+     'word2vec_test': pandas.DataFrame or None}
+        A dictionary that contains the vectorizer and the vectorized
+        sets.
+    
+    See Also
+    --------
+    filter_vocab_words : Remove words not appearing in a vocabulary from a list.
+    get_mean_vector : Calculate the mean vector of a list of words.
+    """
+    output = dict();
+    
+    model = Word2Vec(sentences=text_col_train,
+                     min_count=min_count, vector_size=vector_size, max_final_vocab=max_vocab_size,
+                     workers=4, seed=1746)
+    
+    vocab = list(model.wv.key_to_index.keys())
+    
+    filtered_col_train = text_col_train.apply(filter_vocab_words, vocabulary=vocab)
+    col_with_means_train = filtered_col_train.apply(get_mean_vector, word2vec_model=model)    
+    word2vec_features_train = pd.DataFrame(col_with_means_train.tolist())
+    
+    output['vectorizer'] = model
+    output['word2vec_train'] = word2vec_features_train
+    
+    if text_col_test is not None:
+        filtered_col_test = text_col_test.apply(filter_vocab_words, vocabulary=vocab)
+        col_with_means_test = filtered_col_test.apply(get_mean_vector, word2vec_model=model)    
+        word2vec_features_test = pd.DataFrame(col_with_means_test.tolist())
+        
+        output['word2vec_test'] = word2vec_features_test
+    else:
+        output['word2vec_features_test'] = None
+
     return output
 
 
