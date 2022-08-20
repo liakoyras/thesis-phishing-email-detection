@@ -82,6 +82,48 @@ def fit_model(model, features, target, show_train_accuracy=False):
     
     return fitted_model
 
+def train_logistic_regression(features, target, max_iter=500, penalty='l2', C=1e10, show_train_accuracy=False):
+    """
+    Train a Logistic Regression classifier.
+    
+    It is a simple wrapper that creates an
+    sklearn.LogisticRegression model using the input
+    parameters and then uses fit_model() to train it.
+    
+    Parameters
+    ----------
+    features : pandas.DataFrame
+        The DataFrame containing the features that the
+        classifier will be fitted on.
+    target : pandas.Series
+        The Series with the target class variable.
+    max_iter : int, default 500
+        Maximum number of iterations to converge.
+        To be used by LogisticRegression.
+    penalty : str, default 'l2'
+        The norm of the penalty. To be used by
+        LogisticRegression.
+    C : float, default 1e10
+        The Inverse of regularization strength.
+        To be used by LogisticRegression.
+    show_train_accuracy : bool, default False
+        If True, it prints the accuracy of the model
+        on the training data. To be used by fit_model().
+        
+    Returns
+    -------
+    sklearn.linear_model._logistic.LogisticRegression
+        The fitted LogisticRegression classifier.
+        
+    See Also
+    --------
+    fit_model : Fit a classifier.
+    """
+    lr = LogisticRegression(max_iter=max_iter, penalty=penalty, C=C, random_state=1746)
+    fitted_lr = fit_model(lr, features, target, show_train_accuracy)
+    
+    return fitted_lr
+
 
 """
 Results Evaluation
