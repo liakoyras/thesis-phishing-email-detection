@@ -392,3 +392,41 @@ def results(model, test_features, test_target):
 
     return {'results': results,
             'predictions': predictions}
+
+def multi_model_results(models, names, test_features, test_target):
+    """
+    Evaluate predictions of many models with a test set.
+    
+    It makes predictions for the test set and returns those
+    along with some evaluation metrics by using metrics().
+    
+    Parameters
+    ----------
+    models : list of sklearn classifier object
+        The fitted models to be tested.
+    names : list of str
+        The names of the models, in the same order as the
+        models parameter.
+    test_features : pandas.DataFrame
+        The features of the test set.
+    test_target : pandas.Series
+        The Series with the true class labels of the test set.
+    
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame containing the result metrics for all of the
+        input models.
+        
+    See Also
+    --------
+    results : Evaluate predictions of a model with a test set.
+    """
+    final_df = pd.DataFrame()
+    
+    for model, name in zip(models, names):
+        result = results(model, test_features, test_target)
+        named_df = result['results'].rename(index={0: name})
+        final_df = pd.concat([final_df, named_df])
+
+    return final_df
