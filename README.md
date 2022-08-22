@@ -20,7 +20,7 @@ tar -x -f enron_mail_20150507.tar.gz
 In case this directory structure is not followed, make sure the path/filename variables in the code
 are changed as well.
 
-## Structure
+## Project Structure
 The code is structured as a series of Jupyter Notebooks.
 
 Each notebook contains a part of the data processing and detection process, and outputs the results
@@ -32,6 +32,8 @@ The notebooks should be ran in the following order:
 - `Text Dataset Cleanup.ipynb` Some rudimentary processing (like removing empty rows) and creation
 of two datasets with 1:1 and 1:10 phishing to legitimate ratios.
 - `Text Data Preprocessing.ipynb` Conversion of the email strings to lemmatized lists of words.
+- `Text Feature Extraction and Feature Selection.ipynb` Vectorization of the text features.
+- `Text Data Classification.ipynb` Algorithm training, predictions and evaluation metrics.
 
-The files `raw_utils.py` and `preprocessing.py` contain utility functions that are being used inside
+The python files (`raw_utils.py`, `preprocessing.py`, `features.py` and `machine_learning.py`) contain utility functions that are being used inside
 the notebooks.
