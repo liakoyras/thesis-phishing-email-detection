@@ -20,6 +20,11 @@ tar -x -f enron_mail_20150507.tar.gz
 In case this directory structure is not followed, make sure the path/filename variables in the code
 are changed as well.
 
+## Requirements
+```
+pip install -r requirements.txt
+```
+
 ## Project Structure
 The code is structured as a series of Jupyter Notebooks.
 
