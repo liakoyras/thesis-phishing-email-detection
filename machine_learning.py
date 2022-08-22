@@ -7,6 +7,7 @@ Based on scikit-learn.
 """
 import pandas as pd
 
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -88,13 +89,16 @@ def fit_model(model, features, target, show_train_accuracy=False):
     
     return fitted_model
 
-def train_logistic_regression(features, target, max_iter=500, penalty='l2', C=1e10, show_train_accuracy=False):
+def train_logistic_regression(features, target, max_iter=500, penalty='l2', C=1e10, standardization=True, show_train_accuracy=False):
     """
     Train a Logistic Regression classifier.
     
     It is a simple wrapper that creates an
     sklearn.LogisticRegression model using the input
     parameters and then uses fit_model() to train it.
+    
+    It also supports standardization, in order to be
+    able to match Spark behavior.
     
     Parameters
     ----------
@@ -112,6 +116,8 @@ def train_logistic_regression(features, target, max_iter=500, penalty='l2', C=1e
     C : float, default 1e10
         The Inverse of regularization strength.
         To be used by LogisticRegression.
+    standardization : bool, default True
+        Wether or not to apply standardization.
     show_train_accuracy : bool, default False
         If True, it prints the accuracy of the model
         on the training data. To be used by fit_model().
@@ -126,6 +132,11 @@ def train_logistic_regression(features, target, max_iter=500, penalty='l2', C=1e
     fit_model : Fit a classifier.
     """
     lr = LogisticRegression(max_iter=max_iter, penalty=penalty, C=C, random_state=alg_random_state)
+    
+    if standardization:
+        scaler = StandardScaler().fit(features)
+        features = pd.DataFrame(scaler.transform(features), columns=features.columns)
+    
     fitted_lr = fit_model(lr, features, target, show_train_accuracy)
     
     return fitted_lr
