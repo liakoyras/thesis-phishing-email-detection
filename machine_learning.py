@@ -90,7 +90,7 @@ def fit_model(model, features, target, show_train_accuracy=False):
     
     return fitted_model
 
-def train_logistic_regression(features, target, max_iter=500, penalty='l2', C=1e10, standardization=True, show_train_accuracy=False):
+def train_logistic_regression(features, target, max_iter=1000, penalty='l2', C=1e10, standardization=True, show_train_accuracy=False):
     """
     Train a Logistic Regression classifier.
     
@@ -108,7 +108,7 @@ def train_logistic_regression(features, target, max_iter=500, penalty='l2', C=1e
         classifier will be fitted on.
     target : pandas.Series
         The Series with the target class variable.
-    max_iter : int, default 500
+    max_iter : int, default 1000
         Maximum number of iterations to converge.
         To be used by LogisticRegression.
     penalty : str, default 'l2'
