@@ -7,7 +7,8 @@ Based on scikit-learn.
 """
 import pandas as pd
 
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -258,7 +259,7 @@ def train_gradient_boost(features, target, loss='log_loss', max_depth=3, learnin
     
     return fitted_gb
 
-def train_naive_bayes(features, target, alpha=1.0, show_train_accuracy=False):
+def train_naive_bayes(features, target, alpha=1.0, remove_negatives=False, show_train_accuracy=False):
     """
     Train a Multinomial Naive Bayes classifier.
     
@@ -276,6 +277,9 @@ def train_naive_bayes(features, target, alpha=1.0, show_train_accuracy=False):
     alpha : float, default 1.0
         The parameter for additive smoothing. To be used
         by MultinomialNB.
+    remove_negatives : bool, default False
+        Scales the data to remove negative values (when
+        with word2vec features for example).
     show_train_accuracy : bool, default False
         If True, it prints the accuracy of the model
         on the training data. To be used by fit_model().
@@ -290,6 +294,11 @@ def train_naive_bayes(features, target, alpha=1.0, show_train_accuracy=False):
     fit_model : Fit a classifier.
     """
     nb = MultinomialNB(alpha=alpha)
+    
+    if remove_negatives:
+        scaler = MinMaxScaler().fit(features)
+        features = pd.DataFrame(scaler.transform(features), columns=features.columns)
+    
     fitted_nb = fit_model(nb, features, target, show_train_accuracy)
     
     return fitted_nb
