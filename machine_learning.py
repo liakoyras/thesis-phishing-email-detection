@@ -125,8 +125,12 @@ def train_logistic_regression(features, target, max_iter=1000, penalty='l2', C=1
         
     Returns
     -------
-    sklearn.linear_model._logistic.LogisticRegression
-        The fitted LogisticRegression classifier.
+    dict
+        {'model': sklearn.linear_model._logistic.LogisticRegression, 
+        'scaler': sklearn.preprocessing._data.StandardScaler or None}
+        A dictionary containing the fitted LogisticRegression
+        classifier and the scaler used for the standardization
+        (if this option was selected).
         
     See Also
     --------
@@ -137,10 +141,17 @@ def train_logistic_regression(features, target, max_iter=1000, penalty='l2', C=1
     if standardization:
         scaler = StandardScaler().fit(features)
         features = pd.DataFrame(scaler.transform(features), columns=features.columns)
+    else:
+        scaler = None
+        
+    models = dict()
+    models['scaler'] = scaler
     
     fitted_lr = fit_model(lr, features, target, show_train_accuracy)
+    models['model'] = fitted_lr
     
-    return fitted_lr
+    return {'model': fitted_lr, 
+            'scaler': scaler}
 
 def train_decision_tree(features, target, max_depth=5, show_train_accuracy=False):
     """
@@ -378,12 +389,15 @@ def metrics(true, predicted):
                           'False Negative Rate': [fnr],
                           'Area Under ROC Curve': [auc]})
 
-def results(model, test_features, test_target):
+def results(model, test_features, test_target, scaler=None):
     """
     Evaluate predictions of a model with a test set.
     
     It makes predictions for the test set and returns those
     along with some evaluation metrics by using metrics().
+    
+    It can accept a scaler as a parameter that will be used
+    to scale the testing data.
     
     Parameters
     ----------
@@ -393,7 +407,10 @@ def results(model, test_features, test_target):
         The features of the test set.
     test_target : pandas.Series
         The Series with the true class labels of the test set.
-    
+    scaler : sklearn scaler object or None, default None
+        The scaler that can be used to standardize the testing
+        data.
+        
     Returns
     -------
     dict
@@ -406,6 +423,9 @@ def results(model, test_features, test_target):
     --------
     metrics : Calculate evaluation metrics for a set of predictions.
     """
+    if scaler:
+        test_features = pd.DataFrame(scaler.transform(test_features), columns=test_features.columns)
+        
     predictions = model.predict(test_features)
                   
     results = metrics(test_target, predictions)
@@ -413,12 +433,16 @@ def results(model, test_features, test_target):
     return {'results': results,
             'predictions': predictions}
 
-def multi_model_results(models, names, test_features, test_target):
+def multi_model_results(models, names, test_features, test_target, lr_scaler=None):
     """
     Evaluate predictions of many models with a test set.
     
     It makes predictions for the test set and returns those
     along with some evaluation metrics by using metrics().
+    
+    If a scaler was used when training a Logistic Regression
+    model, it can be passed as an argument and it will be
+    used to standardize the data before making predictions.
     
     Parameters
     ----------
@@ -431,7 +455,11 @@ def multi_model_results(models, names, test_features, test_target):
         The features of the test set.
     test_target : pandas.Series
         The Series with the true class labels of the test set.
-    
+    lr_scaler : sklearn scaler object or None, default None
+        If a scaler is provided and there is a Logistic
+        Regression model in the model list, it will be used
+        to standardize the test data.
+        
     Returns
     -------
     pandas.DataFrame
@@ -445,7 +473,11 @@ def multi_model_results(models, names, test_features, test_target):
     final_df = pd.DataFrame()
     
     for model, name in zip(models, names):
-        result = results(model, test_features, test_target)
+        if 'LogisticRegression' in str(type(model)) and lr_scaler:
+            result = results(model, test_features, test_target, lr_scaler)
+        else:
+            result = results(model, test_features, test_target)
+        
         named_df = result['results'].rename(index={0: name})
         final_df = pd.concat([final_df, named_df])
 
