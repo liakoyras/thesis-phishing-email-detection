@@ -318,9 +318,9 @@ def train_naive_bayes(features, target, alpha=1.0, remove_negatives=False, show_
 """
 Results Evaluation
 """
-def confusion_matrix_rates(true, predicted):
+def confusion_matrix_values(true, predicted):
     """
-    Calculate confusion matrix rates.
+    Calculate the confusion matrix.
     
     Parameters
     ----------
@@ -332,17 +332,17 @@ def confusion_matrix_rates(true, predicted):
     Returns
     -------
     tuple of float
-        A tuple containing the rates.
+        A tuple containing the values of the confusion
+        matrix in order.
     """
-    samples = true.shape[0]
     cm = confusion_matrix(true, predicted)
               
-    tnr = cm[0][0]/samples
-    fpr = cm[0][1]/samples
-    fnr = cm[1][0]/samples
-    tpr = cm[1][1]/samples
+    tn = cm[0][0]
+    fp = cm[0][1]
+    fn = cm[1][0]
+    tp = cm[1][1]
     
-    return (tnr, fpr, fnr, tpr)
+    return (tn, fp, fn, tp)
 
 def metrics(true, predicted):
     """
@@ -351,8 +351,6 @@ def metrics(true, predicted):
     The used metrics are Accuracy, Precision, Recall,
     F1 Score, False Positive and False Negative
     Rates, and Area Under ROC Curve.
-    
-    For FPR and FNR, confusion_matrix_rates() is used.
     
     Parameters
     ----------
@@ -369,16 +367,16 @@ def metrics(true, predicted):
         
     See Also
     --------
-    confusion_matrix_rates : Calculate confusion matrix rates.
+    confusion_matrix_values : Calculate the confusion matrix.
     """
-    cm_rates = confusion_matrix_rates(true, predicted)
+    (tn, fp, fn, tp) = confusion_matrix_values(true, predicted)
     
     acc = accuracy_score(true, predicted)
     pre = precision_score(true, predicted)
     rec = recall_score(true, predicted)
     f1  = f1_score(true, predicted)
-    fpr = cm_rates[1]
-    fnr = cm_rates[2]
+    fpr = fp / (fp + tn)
+    fnr = fn / (tp + fn)
     auc = roc_auc_score(true, predicted)
     
     return pd.DataFrame({'Accuracy': [acc],
