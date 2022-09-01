@@ -79,9 +79,12 @@ def mbox_to_df(filename, filepath, text_only=True):
                 continue
 
             if check_text_types(part):
-                content += (part.get_payload(decode=True).decode('latin-1') + '\n')
+                try:
+                    content += (part.get_payload(decode=True).decode() + '--part--')
+                except UnicodeDecodeError:
+                    content += (part.get_payload(decode=True).decode('latin-1') + '--part--')
 
-        content = content[:-1] # strips the final newline character
+        content = content[:-8] # strips the final separator
 
         row['body'] = content
 
