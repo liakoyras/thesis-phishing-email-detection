@@ -18,6 +18,29 @@ nltk.download('averaged_perceptron_tagger')
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 
+def check_empty(input_string):
+    """
+    Checks if input is considered an empty email.
+
+    An empty email would contain only whitespace along with the
+    '--part--' separator that was added during the parsing.
+    A regex is used to check for this.
+
+    Parameters
+    ----------
+    input_string : str
+        The string to be checked.
+
+    Returns
+    -------
+    bool
+        True if the input is found empty.
+    """
+    if(re.findall(r'^[\s\-\-part\-\-]*$', input_string)):
+        return True
+    else:
+        return False
+
 
 def strip_characters(input_string):
     """
