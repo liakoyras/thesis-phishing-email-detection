@@ -7,6 +7,9 @@ import random
 import mailbox
 import email as eml
 import pandas as pd
+import re
+
+from bs4 import BeautifulSoup
 
 def check_text_types(message):
     """
@@ -22,23 +25,62 @@ def check_text_types(message):
 
     Returns
     -------
-    bool
-        True if text types are detected, False otherwise.
+    str or None
+        The content type if text types are detected, None otherwise.
     """
     type_list = ['text/plain', 'text/html']
     content_type = message.get_content_type()
-    if any(types in content_type for types in type_list):
-        return True
+    if content_type in type_list:
+        return content_type
     else:
-        return False
+        return None
+    
+def parse_html(input_string):
+    """
+    Parse an HTML string.
+    
+    This is done with BeautifulSoup. The returned string has a newline
+    character as a delimiter between the text extracted from different
+    HTML elements.
 
+    Parameters
+    ----------
+    input_string : str
+        The string to be parsed.
 
+    Returns
+    -------
+    str
+        The converted string (or the input string, if none of the
+        transformations were applicable).
+    """
+    soup = BeautifulSoup(input_string, 'lxml')
+    text = soup.get_text('\n', strip=True)
+
+    return text
+    
 def mbox_to_df(filename, filepath, text_only=True):
     """
     Convert the text from emails in a .mbox file to a Pandas DataFrame.
+    
+    It choses only text MIME types, specifically 'text/plain' and
+    'text/html' and tries to parse any HTML with parse_html().
+    
+    Afterwards, it tries to do a very simple deduplication, to avoid
+    getting the same text twice from multipart/alternative emails.
+    This is achieved by standardizing whitespace with the use of
+    regular expressions.
+    
+    During this process, it assumes however that the plaintext version
+    will be the better choice (since we care about the text information
+    only) and that the plaintext part is first (which is usually the
+    case). This is not a big problem since it only affects the
+    duplicate texts, so the version that will be kept in the end does
+    not matter that much (provided the HTML parsing was decent enough).
 
     Each row of the output DataFrame contains a representation of an
-    email, with each header (and the body) in different columns.
+    email, with the body (and other headers in the future) representing
+    a column.
 
     Parameters
     ----------
@@ -53,13 +95,18 @@ def mbox_to_df(filename, filepath, text_only=True):
     -------
     pandas.DataFrame
         The resulting DataFrame.
+        
+    See Also
+    --------
+    parse_html : Parse an HTML string.
+    check_text_types : Check if a message contains text data.
     """
     file = os.path.join(filepath,filename)
     mbox = mailbox.mbox(file)
 
     data = []
     skip_counter = 0
-    for key in mbox.iterkeys():
+    for key in mbox.iterkeys(): # iterating through the mbox file
         try:
             message = mbox[key]
         except UnicodeDecodeError:
@@ -73,20 +120,36 @@ def mbox_to_df(filename, filepath, text_only=True):
             pass
 
         # Extracting body text
-        content = ''
-        for part in message.walk():
+        content = []
+        for part in message.walk(): # iterating through the message parts
             if part.is_multipart():
                 continue
-
-            if check_text_types(part):
+            
+            ctype = check_text_types(part)
+            if ctype:
                 try:
-                    content += (part.get_payload(decode=True).decode() + '--part--')
+                    new_content = part.get_payload(decode=True).decode()
                 except UnicodeDecodeError:
-                    content += (part.get_payload(decode=True).decode('latin-1') + '--part--')
+                    new_content = part.get_payload(decode=True).decode('latin-1')
+               
+                if ctype == 'text/html':
+                    content.append(parse_html(new_content))
+                elif ctype == 'text/plain':
+                    content.append(new_content)
+        
+        # rudimentary deduplication
+        joined = '\n'.join(content)
 
-        content = content[:-8] # strips the final separator
+        stripped = re.sub(r'\s+', ' ', joined)
+        stripped = stripped.strip()
 
-        row['body'] = content
+        if stripped[:len(stripped)//2] == stripped[(len(stripped)//2) + 1:]:
+            if content:
+                row['body'] = content[0]
+            else:
+                row['body'] = content
+        else:
+            row['body'] = joined
 
         data.append(row)
 
