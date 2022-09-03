@@ -23,6 +23,10 @@ nltk.download('averaged_perceptron_tagger', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 
+
+"""
+Text Preprocessing
+"""
 def check_empty(input_string):
     """
     Check if input is considered an empty email.
@@ -228,19 +232,23 @@ def lemmatize(token_list):
     return lemmatized_list
 
 
+"""
+Dataset Processing
+"""
 def dataset_split(dataset, percent=0.2, keep_index=False):
     """
     Split a dataset into train and test sets.
     
-    It is a wrapper for sklearn's train_test_split() that also resets the index.
+    It is a wrapper for sklearn's train_test_split() that also resets
+    the index.
     
     Parameters
     ----------
     dataset : pandas.DataFrame
         The dataset to split.
     percent : int, default 20
-        If it is in range [0, 100], it means the percentage of the original
-        dataset to use as the test set.
+        If it is in range [0, 100], it means the percentage of the
+        original dataset to use as the test set.
     keep_index : bool, default False
         If True, keep the old index in a new column, otherwise drop it.
         
@@ -261,3 +269,44 @@ def dataset_split(dataset, percent=0.2, keep_index=False):
         test = test.reset_index()
     
     return train, test
+
+def dataset_add_columns(dataset, columns, column_names, position=0):
+    """
+    Add columns to a dataset.
+    
+    This is mostly used to streamline the addition of class and id
+    columns to datasets that contain only features.
+    
+    The extra columns will appear in the reverse order from their
+    order on the input lists, and on the beginning of the DataFrame
+    by default.
+    
+    Parameters
+    ----------
+    dataset : pandas.DataFrame
+        The dataset to add the columns.
+    columns : list of pandas.Series
+        The values of the columns to be added.
+    column_names : list of str
+        The names of the columns to be added.
+    position : int, default 0
+        The position on the column index to put the new columns.
+        The default is at the beginning (position 0).
+        
+    Returns
+    -------
+    pandas.DataFrame
+        The initial DataFrame with the added columns.
+        
+    Raises
+    ------
+    ValueError
+        If columns and column_names are not the same size.
+    """
+    if len(columns) != len(column_names):
+        raise ValueError("The lists of names and values have to be the same size.")
+    else:
+        for col, name in zip(columns, column_names):
+            dataset.insert(position, name, col)
+    
+    return dataset

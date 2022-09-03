@@ -11,7 +11,7 @@ from sklearn.feature_selection import SelectPercentile, chi2
 from gensim.models import Word2Vec
 
 """
-Feature Extraction
+Text Feature Extraction
 """
 
 def tfidf_features(text_col_train, text_col_test=None, max_df=1.0, min_df=1, max_features=None):
@@ -126,7 +126,7 @@ def get_mean_vector(wordlist, word2vec_model):
     else:
         return np.zeros(word2vec_model.vector_size)
 
-def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_count=5, max_vocab_size=None):
+def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_count=5, max_vocab_size=None, workers=1):
     """
     Extract Word2Vec embedding features using gensim.
 
@@ -151,6 +151,10 @@ def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_c
     min_count : int, default 5
         The minimum number of times a term has to appear in order to
         be included in the vocabulary. To be used by Word2Vec.
+    workers : int, default 1
+        How many threads to do the processing on. Note that if this is
+        not set to 1, the processing witll be faster but the result
+        will not be 100% reproducible. To be used by Word2Vec.
     max_vocab_size : int, default None
         The maximum number of terms in the vocabulary. To be used by
         Word2Vec.
@@ -173,7 +177,7 @@ def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_c
     
     model = Word2Vec(sentences=text_col_train,
                      min_count=min_count, vector_size=vector_size, max_final_vocab=max_vocab_size,
-                     workers=4, seed=1746)
+                     workers=workers, seed=1746)
     
     vocab = list(model.wv.key_to_index.keys())
     
