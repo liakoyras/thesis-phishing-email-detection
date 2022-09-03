@@ -24,35 +24,6 @@ from sklearn.metrics import roc_auc_score
 
 alg_random_state = 1746
 
-"""
-Preprocessing
-"""
-def separate_features_target(dataframe, num_cols_ignore=2, class_col_name='email_class'):
-    """
-    Separate feature columns from the target column.
-    
-    It assumes that any non-feature columns are in the
-    beginning of the dataset (right after the index).
-    
-    Parameters
-    ----------
-    dataframe : pandas.DataFrame
-        The DataFrame with data to split.
-    num_cols_ignore : int
-        The number of non-feature columns to skip.
-    class_col_name : str
-        The name of the target column.
-        
-    Returns
-    -------
-    dict
-    {'features': pandas.DataFrame,
-     'target': pandas.Series}
-        A dictionary containing the features and target.
-    """
-    return {'features': dataframe[dataframe.columns[num_cols_ignore:]],
-            'target': dataframe[class_col_name]}
-
 
 """
 Training

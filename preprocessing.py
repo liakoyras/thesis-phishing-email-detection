@@ -310,3 +310,33 @@ def dataset_add_columns(dataset, columns, column_names, position=0):
             dataset.insert(position, name, col)
     
     return dataset
+
+
+def separate_features_target(dataframe, num_cols_ignore=2, class_col_name='email_class'):
+    """
+    Separate feature columns from the target column.
+    
+    It assumes that any non-feature columns are in the
+    beginning of the dataset (right after the index).
+    
+    Essentially it is the inverse of a specific case of
+    dataset_add_columns().
+    
+    Parameters
+    ----------
+    dataframe : pandas.DataFrame
+        The DataFrame with data to split.
+    num_cols_ignore : int
+        The number of non-feature columns to skip.
+    class_col_name : str
+        The name of the target column.
+        
+    Returns
+    -------
+    dict
+    {'features': pandas.DataFrame,
+     'target': pandas.Series}
+        A dictionary containing the features and target.
+    """
+    return {'features': dataframe[dataframe.columns[num_cols_ignore:]],
+            'target': dataframe[class_col_name]}
