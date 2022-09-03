@@ -7,6 +7,8 @@ Based on scikit-learn.
 """
 import pandas as pd
 
+from preprocessing import separate_features_target
+
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from sklearn.linear_model import LogisticRegression
@@ -449,5 +451,67 @@ def multi_model_results(models, names, test_features, test_target, lr_scaler=Non
         
         named_df = result['results'].rename(index={0: name})
         final_df = pd.concat([final_df, named_df])
+
+    return final_df
+
+
+def results_by_id(models, names, test_set, id_list, lr_scaler=None):
+    """
+    Present predictions of many models for specific rows.
+    
+    It works similarly to multi_model_results() but it reduces
+    the test_set in the beginning using the provided list of
+    ids and returns the raw predictions instead of the
+    evaluation metrics.
+    
+    The id column is hardcoded to be 'email_id', since
+    this function exists only for presentation purposes.
+    
+    Parameters
+    ----------
+    models : list of sklearn classifier object
+        The fitted models to be tested.
+    names : list of str
+        The names of the models, in the same order as the
+        models parameter.
+    test_set : pandas.DataFrame
+        The complete test dataset (that contains feature, class and
+        id columns).
+    id_list : list of int
+        The list of ids to keep from the initial test dataset.
+    lr_scaler : sklearn scaler object or None, default None
+        If a scaler is provided and there is a Logistic
+        Regression model in the model list, it will be used
+        to standardize the test data.
+        
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame containing the predictions about specific emails
+        for all of the input models.
+        
+    See Also
+    --------
+    multi_model_results : Evaluate predictions of many models with a test set.
+    """
+    test_set = test_set[test_set['email_id'].isin(id_list)].reset_index(drop=True)
+
+    test_features_target = separate_features_target(test_set)
+    test_features = test_features_target['features']
+    test_target = test_features_target['target']
+
+    final_df = pd.DataFrame()
+
+    final_df['Email ID'] = test_set['email_id']
+    final_df['True Class'] = test_target.reset_index(drop=True)
+
+    for model, name in zip(models, names):
+        if 'LogisticRegression' in str(type(model)) and lr_scaler:
+            test_features = pd.DataFrame(lr_scaler.transform(test_features), columns=test_features.columns)
+            predictions = model.predict(test_features)
+        else:
+            predictions = model.predict(test_features)
+
+        final_df[name] = predictions
 
     return final_df
