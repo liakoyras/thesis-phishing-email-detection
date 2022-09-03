@@ -7,6 +7,11 @@ import pandas as pd
 import re
 
 from bs4 import BeautifulSoup
+from sklearn.model_selection import train_test_split
+
+import random
+random.seed(1746)
+
 import nltk
 from nltk.corpus import stopwords
 from nltk.corpus import wordnet
@@ -221,3 +226,38 @@ def lemmatize(token_list):
                        for word, tag in tagged_list]
     
     return lemmatized_list
+
+
+def dataset_split(dataset, percent=0.2, keep_index=False):
+    """
+    Split a dataset into train and test sets.
+    
+    It is a wrapper for sklearn's train_test_split() that also resets the index.
+    
+    Parameters
+    ----------
+    dataset : pandas.DataFrame
+        The dataset to split.
+    percent : int, default 20
+        If it is in range [0, 100], it means the percentage of the original
+        dataset to use as the test set.
+    keep_index : bool, default False
+        If True, keep the old index in a new column, otherwise drop it.
+        
+    Returns
+    -------
+    train : pandas.DataFrame
+        The result train set.
+    test : pandas.DataFrame
+        The result test set.
+    """
+    train, test = train_test_split(dataset, test_size=percent/100, random_state=1746)
+    
+    if not keep_index:
+        train = train.reset_index(drop=True)
+        test = test.reset_index(drop=True)
+    else:
+        train = train.reset_index()
+        test = test.reset_index()
+    
+    return train, test
