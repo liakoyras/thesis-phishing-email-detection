@@ -37,11 +37,20 @@ def check_text_types(message):
     
 def parse_html(input_string):
     """
-    Parse an HTML string.
+    Parse an HTML string and extract the text.
     
-    This is done with BeautifulSoup. The returned string has a newline
-    character as a delimiter between the text extracted from different
-    HTML elements.
+    This is done with BeautifulSoup. A list of inline tags that could
+    contain text is being merged with their parent tags, so that there
+    won't be any needless newline delimiters by get_text(). After the
+    tree is pruned, it is being parsed again in order for the text to
+    be properly merged without actually belonging on a different node.
+    
+    Before this process, the hyperlink is extracted from all <a> tags
+    so that there is more parity between the plaintext and HTML version
+    of multipart emails.
+    
+    The returned string has a newline character as a delimiter between
+    the text extracted from different (block) HTML elements.
 
     Parameters
     ----------
@@ -55,8 +64,26 @@ def parse_html(input_string):
         transformations were applicable).
     """
     soup = BeautifulSoup(input_string, 'lxml')
-    text = soup.get_text('\n', strip=True)
+        
+    inline_tag_names = ['a','abbr','acronym','b','bdo','button','cite','code',
+                       'dfn','em','i','kbd','label','output','q','samp','small',
+                       'span','strong','sub','sup','time','var']
+    
+    inline_tags = soup.find_all(inline_tag_names)
+        
+    if inline_tags:
+        for tag in inline_tags:
+            if tag.name=='a':
+                url = tag.get('href')
+                if url:
+                    tag.append("<" + url + ">")
+                    
+            tag.unwrap()
 
+        new_soup = BeautifulSoup(str(soup), 'lxml')        
+        text = new_soup.get_text('\n', strip=True)
+    else:
+        text = soup.get_text('\n', strip=True)
     return text
     
 def mbox_to_df(filename, filepath, text_only=True):
@@ -98,7 +125,7 @@ def mbox_to_df(filename, filepath, text_only=True):
         
     See Also
     --------
-    parse_html : Parse an HTML string.
+    parse_html : Parse an HTML string and extract the text.
     check_text_types : Check if a message contains text data.
     """
     file = os.path.join(filepath,filename)
@@ -131,7 +158,7 @@ def mbox_to_df(filename, filepath, text_only=True):
                     new_content = part.get_payload(decode=True).decode()
                 except UnicodeDecodeError:
                     new_content = part.get_payload(decode=True).decode('latin-1')
-               
+                
                 if ctype == 'text/html':
                     content.append(parse_html(new_content))
                 elif ctype == 'text/plain':
@@ -139,11 +166,9 @@ def mbox_to_df(filename, filepath, text_only=True):
         
         # rudimentary deduplication
         joined = '\n'.join(content)
+        stripped = re.sub(r'\s+', '', joined)
 
-        stripped = re.sub(r'\s+', ' ', joined)
-        stripped = stripped.strip()
-
-        if stripped[:len(stripped)//2] == stripped[(len(stripped)//2) + 1:]:
+        if stripped[:len(stripped)//2] == stripped[(len(stripped)//2):]:
             if content:
                 row['body'] = content[0]
             else:
