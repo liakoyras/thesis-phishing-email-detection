@@ -80,7 +80,6 @@ def replace_email(input_string, replacement_string='<emailaddress>'):
 
     return output_string
 
-
 def replace_url(input_string, replacement_string='<urladdress>'):
     """
     Replace URLs in a string with a defined string.
@@ -153,7 +152,6 @@ def tokenize(input_text):
     
     return clean_list
 
-
 def remove_stopwords(tokenized_text):
     """
     Remove stopwords from a list of words.
@@ -199,7 +197,6 @@ def get_wordnet_pos(treebank_tag):
     else:
         return None
 
-
 def lemmatize(token_list):
     """
     Lemmatizes a list of tokens using WordNet lemmatizer.
@@ -230,6 +227,59 @@ def lemmatize(token_list):
                        for word, tag in tagged_list]
     
     return lemmatized_list
+
+
+def sanitize_whitespace(input_string):
+    """
+    Remove some extra whitespace and fix stray dots.
+
+    First, check if a line in the input only contains a dot, in which
+    case the dot is appended to the previous line that contains text
+    and the line with the dot is removed.
+    
+    Finally, strip leading and trailing whitespace from the output.
+
+    Parameters
+    ----------
+    input_string : str
+        The string to be sanitized.
+
+    Returns
+    -------
+    str
+        The sanitized string.
+    """
+    lines = input_string.split('\n')
+    for index, line  in enumerate(lines):
+        if line=='.':
+            lines.remove(line)
+            for i in range(1, len(lines)): # check for lines that contain text
+                if (lines[index-i] != ''):
+                    lines[index-i] += '.'
+                    break
+                    
+    output_string = '\n'.join(lines)
+    
+    return output_string.strip()
+
+def sanitize_addresses(input_string):
+    """
+    Remove extra special characters from addresses.
+
+    Parameters
+    ----------
+    input_string : str
+        The string to be sanitized.
+
+    Returns
+    -------
+    str
+        The sanitized string.
+    """
+    less = re.sub(r'<+', '<', input_string)
+    more = re.sub(r'>+', '>', less)
+    
+    return more
 
 
 """
