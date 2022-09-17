@@ -435,6 +435,7 @@ def average_word_length(input_tokens):
     """
     return np.mean([len(word) for word in input_tokens])
 
+
 """
 Sentence Size
 """
@@ -537,6 +538,82 @@ def max_sentence_length(sentences):
     max_words = np.max([len(tokenize(sentence)) for sentence in sentences])
     
     return (max_chars, max_words)
+
+
+"""
+Ratios
+"""
+def series_ratio(series_1, series_2):
+    """
+    Create a Series with the ratio of two others.
+    
+    Parameters
+    ----------
+    series_1 : pandas.Series
+        The Series with the nominators.
+    series_2 : pandas.Series
+        The Series with the denominators.
+        
+    Returns
+    -------
+    pandas.Series of float
+        A Series that contains the ratios of series_1/series_2.
+    """
+    return series_1/series_2
+
+def character_to_chars(input_string, character):
+    """
+    Calculate the ratio of a character to all characters.
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+    character : str
+        A single-characte string with the character to count.
+
+    Returns
+    -------
+    float
+        The ratio of the specified character in input_string.
+    """
+    return input_string.count(character) / len(input_string)
+
+def chars_to_lines(input_string):
+    """
+    Calculate the ratio of characters to lines of a string.
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+
+    Returns
+    -------
+    float
+        The ratio of characters to lines in input_string.
+    """
+    num_lines = len(input_string.splitlines())
+    return len(input_string) / num_lines
+
+def alpha_tokens_ratio(input_tokens):
+    """
+    Calculate the ratio of alphabetic tokens.
+    
+    Parameters
+    ----------
+    input_tokens : list of str
+        The list of tokens to calculate the ratio of.
+        
+    Returns
+    -------
+    float
+        The ratio of alphabetic tokens to all tokens.
+    """
+    alpha_tokens = [token for token in input_tokens if token.isalpha()]
+    return len(alpha_tokens) / len(input_tokens)
+
+
 
 """
 Feature Selection
