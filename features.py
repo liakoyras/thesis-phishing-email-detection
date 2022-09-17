@@ -311,6 +311,111 @@ def count_sentences(input_string):
             
     return (len(sentences), upper, lower)
 
+"""
+Word Size Features
+"""
+def small_words(input_tokens):
+    """
+    Count small words (tokens) in a list.
+    
+    A small word is defined as one having 3 or fewer characters.
+    
+    The input list is the output of preprocessing.tokenize.
+    
+    Parameters
+    ----------
+    input_tokens : list of str
+        The tokenized text that will be counted.
+
+    Returns
+    -------
+    (int, float)
+        A tuple containing the number of small words and their relative
+        frequencies in input_tokens.
+    """
+    count = 0
+    for token in input_tokens:
+        if (len(token) <= 3):
+            count += 1
+    
+    frequency = count/len(input_tokens)
+    
+    return (count, frequency)
+
+def big_words(input_tokens):
+    """
+    Count big words (tokens) in a list.
+    
+    A big word is defined as one having more than 6 characters.
+
+    The input list is the output of preprocessing.tokenize.
+    
+    Parameters
+    ----------
+    input_tokens : list of str
+        The tokenized text that will be counted.
+
+    Returns
+    -------
+    (int, float)
+        A tuple containing the number of big words and their relative
+        frequencies in input_tokens.
+    """
+    count = 0
+    for token in input_tokens:
+        if (len(token) > 6):
+            count += 1
+    
+    frequency = count/len(input_tokens)
+    
+    return (count, frequency)
+
+def huge_words(input_tokens):
+    """
+    Count huge words (tokens) in a list.
+    
+    A huge word is defined as one having more than 15 characters.
+
+    The input list is the output of preprocessing.tokenize.
+    
+    Parameters
+    ----------
+    input_tokens : list of str
+        The tokenized text that will be counted.
+
+    Returns
+    -------
+    (int, float)
+        A tuple containing the number of huge words and their relative
+        frequencies in input_tokens.
+    """
+    count = 0
+    for token in input_tokens:
+        if (len(token) > 15):
+            count += 1
+    
+    frequency = count/len(input_tokens)
+    
+    return (count, frequency)
+
+def average_word_length(input_tokens):
+    """
+    Calculate the mean length of words (tokens) in a list.
+    
+    It uses np.mean() for fast calculation.
+    The input list is the output of preprocessing.tokenize.
+    
+    Parameters
+    ----------
+    input_tokens : list of str
+        The tokenized text that will be counted.
+
+    Returns
+    -------
+    float
+        The mean length of words in input_tokens.
+    """
+    return np.mean([len(word) for word in input_tokens])
 
 """
 Feature Selection
