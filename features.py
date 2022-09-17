@@ -13,6 +13,8 @@ from sklearn.feature_selection import SelectPercentile, chi2
 
 from gensim.models import Word2Vec
 
+from preprocessing import tokenize
+
 """
 Text Feature Extraction
 """
@@ -304,8 +306,9 @@ def count_sentences(input_sentences):
             
     return (len(input_sentences), upper, lower)
 
+
 """
-Word Size Features
+Word Size
 """
 def small_words(input_tokens):
     """
@@ -409,6 +412,109 @@ def average_word_length(input_tokens):
         The mean length of words in input_tokens.
     """
     return np.mean([len(word) for word in input_tokens])
+
+"""
+Sentence Size
+"""
+def average_sentence_length(sentences):
+    """
+    Calculate the mean length of sentences in a list.
+    
+    It uses np.mean() for fast calculation.
+    The input list is the output of nltk.sent_tokenize.
+    
+    It uses both characters and words as a unit of length.
+    
+    Parameters
+    ----------
+    sentences : list of str
+        The sentences that will be counted.
+
+    Returns
+    -------
+    (float, float)
+        A tuple containing the mean length of the input sentences
+        in units of characters and words.
+    """
+    avg_chars = np.mean([len(sentence) for sentence in sentences])
+    avg_words = np.mean([len(tokenize(sentence)) for sentence in sentences])
+    
+    return (avg_chars, avg_words)
+
+def std_sentence_length(sentences):
+    """
+    Calculate the standard deviation of length of sentences in a list.
+    
+    It uses np.std() for fast calculation.
+    The input list is the output of nltk.sent_tokenize.
+    
+    It uses both characters and words as a unit of length.
+    
+    Parameters
+    ----------
+    sentences : list of str
+        The sentences that will be counted.
+
+    Returns
+    -------
+    (float, float)
+        A tuple containing the std of the length of the input
+        sentences in units of characters and words.
+    """
+    std_chars = np.std([len(sentence) for sentence in sentences])
+    std_words = np.std([len(tokenize(sentence)) for sentence in sentences])
+    
+    return (std_chars, std_words)
+
+def min_sentence_length(sentences):
+    """
+    Calculate the minimum length of sentences in a list.
+    
+    It uses np.min() for fast calculation.
+    The input list is the output of nltk.sent_tokenize.
+    
+    It uses both characters and words as a unit of length.
+    
+    Parameters
+    ----------
+    sentences : list of str
+        The sentences that will be counted.
+
+    Returns
+    -------
+    (float, float)
+        A tuple containing the min length of the input sentences
+        in units of characters and words.
+    """
+    min_chars = np.min([len(sentence) for sentence in sentences])
+    min_words = np.min([len(tokenize(sentence)) for sentence in sentences])
+    
+    return (min_chars, min_words)
+
+def max_sentence_length(sentences):
+    """
+    Calculate the maximum length of sentences in a list.
+    
+    It uses np.max() for fast calculation.
+    The input list is the output of nltk.sent_tokenize.
+    
+    It uses both characters and words as a unit of length.
+    
+    Parameters
+    ----------
+    sentences : list of str
+        The sentences that will be counted.
+
+    Returns
+    -------
+    (float, float)
+        A tuple containing the max length of the input sentences
+        in units of characters and words.
+    """
+    max_chars = np.max([len(sentence) for sentence in sentences])
+    max_words = np.max([len(tokenize(sentence)) for sentence in sentences])
+    
+    return (max_chars, max_words)
 
 """
 Feature Selection
