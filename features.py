@@ -1,6 +1,9 @@
 """
 This module contains utilities for feature extraction and
 feature selection.
+
+It can extract both vectorized text features and features
+that are based on the writing style (stylometric).
 """
 import pandas as pd
 import numpy as np
@@ -10,10 +13,13 @@ from sklearn.feature_selection import SelectPercentile, chi2
 
 from gensim.models import Word2Vec
 
+from nltk import sent_tokenize
+
+from preprocessing import tokenize
+
 """
 Text Feature Extraction
 """
-
 def tfidf_features(text_col_train, text_col_test=None, max_df=1.0, min_df=1, max_features=None):
     """
     Extract TF-IDF features from a series using scikit-learn.
@@ -201,9 +207,117 @@ def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_c
 
 
 """
+Style Feature Extraction
+"""
+"""
+Simple Counts
+"""
+def count_chars(input_string):
+    """
+    Count characters of a string.
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+
+    Returns
+    -------
+    int
+        The number of characters in input_string.
+    """
+    return len(input_string)
+
+def count_newlines(input_string):
+    """
+    Count newlines in a string.
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+
+    Returns
+    -------
+    int
+        The number of newlines in input_string.
+    """
+    return input_string.count('\n')
+
+def count_words(input_string):
+    """
+    Count words in a string.
+
+    In essence it counts the tokens returned by 
+    preprocessing.tokenize, so it has the same definition of a word.
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+
+    Returns
+    -------
+    int
+        The number of words in input_string.
+    """
+    return len(tokenize(input_string))
+
+def count_unique_words(input_string):
+    """
+    Count unique words in a string.
+
+    In essence it counts the unique tokens returned by
+    preprocessing.tokenize, using set().
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+
+    Returns
+    -------
+    int
+        The number of unique words in input_string.
+    """
+    return len(set(tokenize(input_string)))
+
+def count_sentences(input_string):
+    """
+    Count sentences and how many start with uppercase/lowercase.
+
+    It uses nltk.sent_tokenize to split the sentences. This means
+    that any sentences separated by a newline without punctuation
+    will be considered simply as wrapped text, and not new different
+    sentences.
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+
+    Returns
+    -------
+    (int, int, int)
+        A tuple containing the number of sentences, sentences that
+        start with an uppercase letter and sentences that start with
+        a lowercase letter.
+    """
+    sentences = sent_tokenize(input_string)
+    
+    upper, lower = 0, 0
+    for sentence in sentences:
+        if sentence[0].isupper():
+            upper +=1
+        else:
+            lower +=1
+            
+    return (len(sentences), upper, lower)
+
+
+"""
 Feature Selection
 """
-
 def chi2_feature_selection(features_train, class_col_train, features_test=None, percentile=50):
     """
     Select top features of a set using chi2 of scikit-learn.
