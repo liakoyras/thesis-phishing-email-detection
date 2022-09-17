@@ -15,8 +15,6 @@ from gensim.models import Word2Vec
 
 from nltk import sent_tokenize
 
-from preprocessing import tokenize
-
 """
 Text Feature Extraction
 """
@@ -244,43 +242,42 @@ def count_newlines(input_string):
     """
     return input_string.count('\n')
 
-def count_words(input_string):
+def count_words(input_tokens):
     """
-    Count words in a string.
+    Count words (tokens) in a list.
 
-    In essence it counts the tokens returned by 
-    preprocessing.tokenize, so it has the same definition of a word.
+    The input list is the output of preprocessing.tokenize.
     
     Parameters
     ----------
-    input_string : str
-        The string that will be counted.
+    input_tokens : list of str
+        The tokenized text that will be counted.
 
     Returns
     -------
     int
-        The number of words in input_string.
+        The number of words in input_tokens.
     """
-    return len(tokenize(input_string))
+    return len(input_tokens)
 
-def count_unique_words(input_string):
+def count_unique_words(input_tokens):
     """
-    Count unique words in a string.
+    Count unique words (tokens) in a list.
 
     In essence it counts the unique tokens returned by
     preprocessing.tokenize, using set().
     
     Parameters
     ----------
-    input_string : str
-        The string that will be counted.
+    input_tokens : list of str
+        The tokenized text that will be counted.
 
     Returns
     -------
     int
-        The number of unique words in input_string.
+        The number of unique words in input_tokens.
     """
-    return len(set(tokenize(input_string)))
+    return len(set(input_tokens))
 
 def count_sentences(input_string):
     """
