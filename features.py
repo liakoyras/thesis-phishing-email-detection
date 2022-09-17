@@ -14,6 +14,7 @@ from sklearn.feature_selection import SelectPercentile, chi2
 from gensim.models import Word2Vec
 
 from preprocessing import tokenize
+from string import punctuation
 
 """
 Text Feature Extraction
@@ -241,6 +242,27 @@ def count_newlines(input_string):
         The number of newlines in input_string.
     """
     return input_string.count('\n')
+
+def count_special_chars(input_string):
+    """
+    Count special characters in a string.
+    
+    The list of special characters that is being used is
+    python's string.punctuation.
+    
+    Parameters
+    ----------
+    input_string : str
+        The string that will be counted.
+
+    Returns
+    -------
+    int
+        The number of special characters in input_string.
+    """
+    special_chars = [char for char in punctuation]
+    
+    return np.sum(input_string.count(c) for c in special_chars)
 
 def count_words(input_tokens):
     """
