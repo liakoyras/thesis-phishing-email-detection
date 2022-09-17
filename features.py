@@ -13,8 +13,6 @@ from sklearn.feature_selection import SelectPercentile, chi2
 
 from gensim.models import Word2Vec
 
-from nltk import sent_tokenize
-
 """
 Text Feature Extraction
 """
@@ -279,14 +277,11 @@ def count_unique_words(input_tokens):
     """
     return len(set(input_tokens))
 
-def count_sentences(input_string):
+def count_sentences(input_sentences):
     """
     Count sentences and how many start with uppercase/lowercase.
-
-    It uses nltk.sent_tokenize to split the sentences. This means
-    that any sentences separated by a newline without punctuation
-    will be considered simply as wrapped text, and not new different
-    sentences.
+    
+    The input list is the output of nltk.sent_tokenize.
     
     Parameters
     ----------
@@ -300,16 +295,14 @@ def count_sentences(input_string):
         start with an uppercase letter and sentences that start with
         a lowercase letter.
     """
-    sentences = sent_tokenize(input_string)
-    
     upper, lower = 0, 0
-    for sentence in sentences:
+    for sentence in input_sentences:
         if sentence[0].isupper():
             upper +=1
         else:
             lower +=1
             
-    return (len(sentences), upper, lower)
+    return (len(input_sentences), upper, lower)
 
 """
 Word Size Features
