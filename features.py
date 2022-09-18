@@ -7,6 +7,7 @@ that are based on the writing style (stylometric).
 """
 import pandas as pd
 import numpy as np
+import re
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectPercentile, chi2
@@ -694,9 +695,19 @@ def errors_check(input_text, tool):
     It uses the language_tool_python module as the back-end, which
     is a wrapper for Language Tool.
     
+    At the beginning, a simple cleaning of <emailaddress> and
+    <urladdress> tokens is performed using regular expressions.
+    This is beneficial not only because they should not be
+    considered to be spelling mistakes in the first place, but also
+    for performance reasons.
+    
     Taking the tool as a parameter instead of initializing it here
     saves an enormous amount of time during the execution, since
     the initialization process takes several seconds.
+    
+    In case an email contains so many errors that it makes the
+    server unresponsive, the return value will be numpy.NaN and
+    the program will continue.
     
     Parameters
     ----------
@@ -710,9 +721,16 @@ def errors_check(input_text, tool):
     int
         The number of errors found in the text.
     """
-    matches = tool.check(input_text)
+    clean_text = re.sub(r'<emailaddress>', 'email address', input_text)
+    clean_text = re.sub(r'<urladdress>', 'web address', clean_text)
     
-    return len(matches)
+    try:
+        matches = tool.check(clean_text)
+        errors = len(matches)
+    except:
+        errors = np.NaN
+        
+    return errors
 
 
 
