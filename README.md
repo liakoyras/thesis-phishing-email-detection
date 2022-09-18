@@ -25,6 +25,8 @@ are changed as well.
 pip install -r requirements.txt
 ```
 
+Also, in order for Language Tool to work, make sure Java is installed on the machine.
+
 ## Project Structure
 The code is structured as a series of Jupyter Notebooks.
 

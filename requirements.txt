@@ -1,6 +1,8 @@
 beautifulsoup4==4.11.1
 gensim==4.2.0
+language_tool_python==2.7.1
 nltk==3.7
 numpy==1.22.3
 pandas==1.4.1
+readability_lxml==0.8.1
 scikit_learn==1.1.2
