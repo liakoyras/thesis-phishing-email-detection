@@ -10,11 +10,13 @@ import numpy as np
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectPercentile, chi2
-
 from gensim.models import Word2Vec
 
-from preprocessing import tokenize
 from string import punctuation
+from readability import Readability
+import language_tool_python
+
+from preprocessing import tokenize
 
 """
 Text Feature Extraction
@@ -612,6 +614,105 @@ def alpha_tokens_ratio(input_tokens):
     """
     alpha_tokens = [token for token in input_tokens if token.isalpha()]
     return len(alpha_tokens) / len(input_tokens)
+
+
+"""
+Readability and Spelling
+"""
+def readability(input_text):
+    """
+    Calculate several readability scores for a text.
+    
+    The scores are Flesch Kincaid Grade Level, Flesch Reading Ease,
+    Dale Chall Readability, Automated Readability Index (ARI),
+    Coleman Liau Index, Gunning Fog, Spache and Linsear Write, using
+    the implementation of the readability (py-readability-metrics)
+    module.
+    
+    Since this implementation needs at least 100 words to function,
+    the messages with less than this amount (the thrown error will be
+    caught by try/except) will have numpy.NaN as the value for the
+    readability scores.
+    
+    Parameters
+    ----------
+    input_text : str
+        The string that will be scored.
+
+    Returns
+    -------
+    (float, float, float, float, float, float, float, float)
+        A tuple containing the different readability scores in order.
+    """
+    r = Readability(input_text)
+    
+    try:
+        f_k_score = r.flesch_kincaid().score
+    except:
+        f_k_score = np.NaN
+    try:
+        fle_score = r.flesch().score
+    except:
+        fle_score = np.NaN
+    try:
+        fog_score = r.gunning_fog().score
+    except:
+        fog_score = np.NaN
+    try:
+        col_score = r.coleman_liau().score
+    except:
+        col_score = np.NaN
+    try:
+        dal_score = r.dale_chall().score
+    except:
+        dal_score = np.NaN
+    try:
+        ari_score = r.ari().score
+    except:
+        ari_score = np.NaN
+    try:
+        l_w_score = r.linsear_write().score
+    except:
+        l_w_score = np.NaN
+    # there are not enough messages with more than 100 sentences
+    #try:
+    #    smg_score = r.smog().score
+    #except:
+    #    smg_score = np.NaN
+    try:
+        spa_score = r.spache().score
+    except:
+        spa_score = np.NaN
+    
+    return (f_k_score, fle_score, fog_score, col_score, dal_score, ari_score, l_w_score, spa_score)
+
+
+def errors_check(input_text, tool):
+    """
+    Count the number of spelling and grammatical errors.
+    
+    It uses the language_tool_python module as the back-end, which
+    is a wrapper for Language Tool.
+    
+    Taking the tool as a parameter instead of initializing it here
+    saves an enormous amount of time during the execution, since
+    the initialization process takes several seconds.
+    
+    Parameters
+    ----------
+    input_text : str
+        The string that will be checked for errors.
+    tool : language_tool_python.LanguageTool
+        The initialized LanguageTool instance.
+        
+    Returns
+    -------
+    int
+        The number of errors found in the text.
+    """
+    matches = tool.check(input_text)
+    
+    return len(matches)
 
 
 
