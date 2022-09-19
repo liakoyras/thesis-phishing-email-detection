@@ -4,10 +4,12 @@ from the emails into a format more suitable for use with machine
 learning algorithms.
 """
 import pandas as pd
+import numpy as np
 import re
 
 from bs4 import BeautifulSoup
 from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
 
 import random
 random.seed(1746)
@@ -390,3 +392,34 @@ def separate_features_target(dataframe, num_cols_ignore=2, class_col_name='email
     """
     return {'features': dataframe[dataframe.columns[num_cols_ignore:]],
             'target': dataframe[class_col_name]}
+
+"""
+Missing Values
+"""
+def impute_mean(train, test):
+    """
+    Fills the missing values of a dataset using the mean value.
+    
+    The sklearn.SimpleImputer instance will be fitted on the train
+    data and will be used to transform the test data too.
+    
+    Parameters
+    ----------
+    train : pandas.DataFrame
+        The train set to process.
+    test : pandas.DataFrame
+        The test set to process.
+        
+    Returns
+    -------
+    train : pandas.DataFrame
+        The imputed training set.
+    test : pandas.DataFrame
+        The imputed test set.
+    """
+    imp_mean = SimpleImputer(missing_values=np.NaN, strategy='mean')
+    
+    train = pd.DataFrame(imp_mean.fit_transform(train), columns=train.columns)
+    test = pd.DataFrame(imp_mean.transform(test), columns=train.columns)
+    
+    return train, test
