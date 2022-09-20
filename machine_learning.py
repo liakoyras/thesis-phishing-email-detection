@@ -99,8 +99,8 @@ def train_logistic_regression(features, target, max_iter=1000, penalty='l2', C=1
     Returns
     -------
     dict
-        {'model': sklearn.linear_model._logistic.LogisticRegression, 
-        'scaler': sklearn.preprocessing._data.StandardScaler or None}
+    {'model': sklearn.linear_model._logistic.LogisticRegression, 
+     'scaler': sklearn.preprocessing._data.StandardScaler or None}
         A dictionary containing the fitted LogisticRegression
         classifier and the scaler used for the standardization
         (if this option was selected).
@@ -251,6 +251,9 @@ def train_naive_bayes(features, target, alpha=1.0, remove_negatives=False, show_
     sklearn.MultinomialNB model using the input
     parameters and then uses fit_model() to train it.
     
+    It can also standardize the values to [0,1] in order to
+    remove any negative values (that NB cannot work with).
+    
     Parameters
     ----------
     features : pandas.DataFrame
@@ -263,15 +266,19 @@ def train_naive_bayes(features, target, alpha=1.0, remove_negatives=False, show_
         by MultinomialNB.
     remove_negatives : bool, default False
         Scales the data to remove negative values (when
-        with word2vec features for example).
+        training with word2vec features for example).
     show_train_accuracy : bool, default False
         If True, it prints the accuracy of the model
         on the training data. To be used by fit_model().
         
     Returns
     -------
-    sklearn.naive_bayes.MultinomialNB
-        The fitted MultinomialNB classifier.
+    dict
+    {'model': sklearn.naive_bayes.MultinomialNB,
+     'scaler': sklearn.preprocessing._data.MinMaxScaler or None}
+        A dictionary containing the fitted MultinomialNB
+        classifier and the scaler used for the standardization (if
+        (if this option was selected).
         
     See Also
     --------
@@ -282,10 +289,13 @@ def train_naive_bayes(features, target, alpha=1.0, remove_negatives=False, show_
     if remove_negatives:
         scaler = MinMaxScaler().fit(features)
         features = pd.DataFrame(scaler.transform(features), columns=features.columns)
+    else:
+        scaler = None
     
     fitted_nb = fit_model(nb, features, target, show_train_accuracy)
     
-    return fitted_nb
+    return {'model': fitted_nb, 
+            'scaler': scaler}
 
 
 """
@@ -404,7 +414,7 @@ def results(model, test_features, test_target, scaler=None):
     return {'results': results,
             'predictions': predictions}
 
-def multi_model_results(models, names, test_features, test_target, lr_scaler=None):
+def multi_model_results(models, names, test_features, test_target, lr_scaler=None, nb_scaler=None):
     """
     Evaluate predictions of many models with a test set.
     
@@ -430,6 +440,11 @@ def multi_model_results(models, names, test_features, test_target, lr_scaler=Non
         If a scaler is provided and there is a Logistic
         Regression model in the model list, it will be used
         to standardize the test data.
+    nb_scaler : sklearn scaler object or None, default None
+        If a scaler is provided and there is a Multinomial NB model
+        in the model list, it will be used to standardize the test data
+        (since Naive Bayes needs to be trained without negative values
+        in the feature set).
         
     Returns
     -------
@@ -446,6 +461,8 @@ def multi_model_results(models, names, test_features, test_target, lr_scaler=Non
     for model, name in zip(models, names):
         if 'LogisticRegression' in str(type(model)) and lr_scaler:
             result = results(model, test_features, test_target, lr_scaler)
+        elif 'MultinomialNB' in str(type(model)) and nb_scaler:
+            result = results(model, test_features, test_target, nb_scaler)
         else:
             result = results(model, test_features, test_target)
         
@@ -455,7 +472,7 @@ def multi_model_results(models, names, test_features, test_target, lr_scaler=Non
     return final_df
 
 
-def results_by_id(models, names, test_set, id_list, lr_scaler=None):
+def results_by_id(models, names, test_set, id_list, lr_scaler=None, nb_scaler=None):
     """
     Present predictions of many models for specific rows.
     
@@ -483,6 +500,11 @@ def results_by_id(models, names, test_set, id_list, lr_scaler=None):
         If a scaler is provided and there is a Logistic
         Regression model in the model list, it will be used
         to standardize the test data.
+    nb_scaler : sklearn scaler object or None, default None
+        If a scaler is provided and there is a Multinomial NB model
+        in the model list, it will be used to standardize the test data
+        (since Naive Bayes needs to be trained without negative values
+        in the feature set).
         
     Returns
     -------
@@ -507,8 +529,9 @@ def results_by_id(models, names, test_set, id_list, lr_scaler=None):
 
     for model, name in zip(models, names):
         if 'LogisticRegression' in str(type(model)) and lr_scaler:
-            test_features = pd.DataFrame(lr_scaler.transform(test_features), columns=test_features.columns)
-            predictions = model.predict(test_features)
+            predictions = model.predict(pd.DataFrame(lr_scaler.transform(test_features), columns=test_features.columns))
+        elif 'MultinomialNB' in str(type(model)) and nb_scaler:
+            predictions = model.predict(pd.DataFrame(nb_scaler.transform(test_features), columns=test_features.columns))
         else:
             predictions = model.predict(test_features)
 
