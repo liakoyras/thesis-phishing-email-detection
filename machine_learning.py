@@ -17,6 +17,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.naive_bayes import MultinomialNB
 
+from sklearn.model_selection import cross_val_predict
+
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -116,12 +118,8 @@ def train_logistic_regression(features, target, max_iter=1000, penalty='l2', C=1
         features = pd.DataFrame(scaler.transform(features), columns=features.columns)
     else:
         scaler = None
-        
-    models = dict()
-    models['scaler'] = scaler
     
     fitted_lr = fit_model(lr, features, target, show_train_accuracy)
-    models['model'] = fitted_lr
     
     return {'model': fitted_lr, 
             'scaler': scaler}
@@ -309,7 +307,7 @@ def confusion_matrix_values(true, predicted):
     ----------
     true : pandas.Series
         The Series with the correct class labels.
-    predicted : pandas.Series
+    predicted : pandas.Series or numpy.ndarray
         The Series with the predicted class labels.
         
     Returns
@@ -339,7 +337,7 @@ def metrics(true, predicted):
     ----------
     true : pandas.Series
         The Series with the correct class labels.
-    predicted : pandas.Series
+    predicted : pandas.Series or numpy.ndarray
         The Series with the predicted class labels.
     
     Returns
@@ -396,7 +394,7 @@ def results(model, test_features, test_target, scaler=None):
     -------
     dict
     {'results': pandas.DataFrame,
-     'predictions': pandas.Series}
+     'predictions': numpy.ndarray}
         A dictionary containing the test result metrics and
         the predictions themselves.
         
@@ -538,3 +536,257 @@ def results_by_id(models, names, test_set, id_list, lr_scaler=None, nb_scaler=No
         final_df[name] = predictions
 
     return final_df
+
+
+"""
+Stacking
+"""
+def train_models(feature_sets, target):
+    """
+    Train multiple classifiers on different feature sets.
+    
+    The models that will be used are hardcoded.
+    
+    Parameters
+    ----------
+    feature_sets : list of dict
+        {'name': str,
+        'features': pandas.DataFrame}
+        A list of dictionaries containing a name for the feature
+        set and the DataFrame containing the features that the
+        classifiers will be trained on.
+    target : pandas.Series
+        The Series with the target class variable.
+        
+    Returns
+    -------
+    list of dict
+    {'name': str,
+     'features': str,
+     'model': sklearn classifier object or dict}
+        A list of dictionaries containing the name of the model,
+        the name of the feature set used to train it and the
+        model itself (or a dictionary with the model and the scaler
+        if one was used).
+    """
+    output_models = []
+    for feature_set in feature_sets:
+        set_name = feature_set['name']
+        output_models.append({'name': 'lr', 'features': set_name, 'model': train_logistic_regression(feature_set['features'], target)})
+        output_models.append({'name': 'dt', 'features': set_name, 'model': train_decision_tree(feature_set['features'], target)})
+        output_models.append({'name': 'rf', 'features': set_name, 'model': train_random_forest(feature_set['features'], target)})
+        output_models.append({'name': 'gb', 'features': set_name, 'model': train_gradient_boost(feature_set['features'], target)})
+        output_models.append({'name': 'nb', 'features': set_name, 'model': train_naive_bayes(feature_set['features'], target, remove_negatives=True)})
+        
+    return output_models
+
+def train_stacked_models(initial_models, train_feature_sets, train_target, final_classifier=None, exclude_models=[], append_features=False):
+    """
+    Train a Stacking classifier.
+    
+    It uses the same method as sklearn.StackingClassifier:
+    the input level 0 classifiers (trained on the entirety
+    of the training dataset) are used to make robust cross
+    validated predictions on the training dataset and then
+    those predictions are used to train another classifier
+    (by default Logistical Regression).
+    
+    When "predictions" are referenced, it means the probability
+    of the phishing class that sklearn's predict_proba has
+    returned.
+    
+    Parameters
+    ----------
+    initial_models : list of dict
+        {'name': str,
+         'features': str,
+         'model': sklearn classifier object or dict}
+        A list created by train_models containing the fitted
+        classifier models that will be stacked.
+    train_feature_sets : list of dict
+        {'name': str,
+        'features': pandas.DataFrame}
+        A list of dictionaries containing a name for the feature
+        set and the DataFrame containing the features that the
+        classifiers will be trained on.
+        
+        Note that these dictionaries have to match the ones given
+        as input to the instance of train_models used to train the
+        initial_models.
+    train_target : pandas.Series
+        The Series with the target class variable.
+    final_classifier : sklearn classifier model or None, default None
+        A classifier to be used as the level 1 model. If None
+        is given, the default is Logistic Regression.
+    exclude_models : list of {'lr', 'dt', 'rf', 'gb', 'nb'}
+        If a list of the above strings is passed, any model found
+        with those names will be excluded from the stacking (useful
+        in order to be able to pass the output of train_models
+        directly in initial_models without pruning it).
+    append_features : bool, default False
+        If True, the training data for the level 0 classifiers will
+        also be used for the training of the level 1 classifier.
+        
+    Returns
+    -------
+    sklearn classifier object
+        The fitted stacking classifier.
+        
+    See Also
+    --------
+    train_models : Train multiple classifiers on different feature sets.
+    """
+    initial_models = [model for model in initial_models if model['name'] not in exclude_models]
+    
+    predictions = pd.DataFrame()
+    for model in initial_models:
+        col_name = model['name'] + "_" + model['features']
+        clf = model['model']
+        if type(clf) is dict:
+            # If the type is dictionary, it means that it was created
+            # with a training function that outputs both the model and
+            # a scaler.
+            scaler = clf['scaler']
+            clf = clf['model']
+            
+            for train_feature_set in train_feature_sets:
+                # make predictions on the same set the model was trained on
+                if train_feature_set['name'] == model['features']:
+                    scaled_features = pd.DataFrame(scaler.transform(train_feature_set['features']),
+                                                   columns=train_feature_set['features'].columns)
+                    predictions[col_name] = pd.DataFrame(cross_val_predict(clf, scaled_features, train_target, method='predict_proba'))[1]
+            
+        else:
+            for train_feature_set in train_feature_sets:
+                # make predictions on the same set the model was trained on
+                if train_feature_set['name'] == model['features']:
+                    train_features = train_feature_set['features']
+                    predictions[col_name] = pd.DataFrame(cross_val_predict(clf, train_features, train_target, method='predict_proba'))[1]
+    
+    if append_features:
+        feature_sets = [feature_set['features'] for feature_set in train_feature_sets]
+        feature_sets.append(predictions)
+        final_features = pd.concat(feature_sets, axis=1)
+    else:
+        final_features = predictions
+    
+    if final_classifier is None:
+        final_classifier = LogisticRegression(max_iter=1000, penalty='l2', C=1e10, random_state=alg_random_state)
+    
+    fitted_final_model = final_classifier.fit(final_features, train_target)
+    
+    return fitted_final_model
+
+def test_stacked_models(initial_models, test_feature_sets, test_target, final_classifier, exclude_models=[], append_features=False, result_row_name=None):
+    """
+    Evaluate a Stacking classifier with a test set.
+    
+    This function is similar to test_stacked_models with some
+    key differences.
+    
+    It makes predictions about the test set with the initial
+    models and uses these as the features for the fitted
+    final_classifier.
+    
+    Note that there is no cross validation during the prediction
+    making, since that would lead to data leakage from the test
+    set to the level 1 classifier.
+    
+    Finally, both the predictions and a DataFrame with result
+    metrics are being returned.
+    
+    Parameters
+    ----------
+    initial_models : list of dict
+        {'name': str,
+         'features': str,
+         'model': sklearn classifier object or dict}
+        A list created by train_models containing the fitted
+        classifier models that will be stacked.
+    test_feature_sets : list of dict
+        {'name': str,
+        'features': pandas.DataFrame}
+        A list of dictionaries containing a name for the feature
+        set and the DataFrame containing the features that the
+        classifiers will be tested on.
+        
+        Note that these dictionaries have to match the ones given
+        as input to the instance of train_models used to train the
+        initial_models.
+    test_target : pandas.Series
+        The Series with the target class variable.
+    final_classifier : sklearn classifier model
+        A fitted classifier to be used as the level 1 model.
+    exclude_models : list of {'lr', 'dt', 'rf', 'gb', 'nb'}
+        If a list of the above strings is passed, any model found
+        with those names will be excluded from the stacking (useful
+        in order to be able to pass the output of train_models
+        directly in initial_models without pruning it).
+    append_features : bool, default False
+        If True, the training data for the level 0 classifiers will
+        also be used for the training of the level 1 classifier.
+    result_row_name : str or None
+        If a string is given, it will be used as the index name of the
+        returned metrics DataFrame. The default behavior creates a name
+        with the algorithms used for the stacking, the final classifier,
+        and wether the initial features were appended.
+        
+    Returns
+    -------
+    dict
+    {'results': pandas.DataFrame,
+     'predictions': numpy.ndarray}
+        The result metrics in a DataFrame row and the predictions array.
+        
+    See Also
+    --------
+    train_models : Train multiple classifiers on different feature sets.
+    train_stacked_models : Train a Stacking classifier.
+    """
+    initial_models = [model for model in initial_models if model['name'] not in exclude_models]
+    
+    predictions = pd.DataFrame()
+    for model in initial_models:
+        col_name = model['name'] + "_" + model['features']
+        clf = model['model']
+        if type(clf) is dict:
+            # If the type is dictionary, it means that it was created
+            # with a training function that outputs both the model and
+            # a scaler.
+            scaler = clf['scaler']
+            clf = clf['model']
+            for test_feature_set in test_feature_sets:
+                # make predictions on the same set the model was trained on
+                if test_feature_set['name'] == model['features']:
+                    scaled_features = pd.DataFrame(scaler.transform(test_feature_set['features']),
+                                                   columns=test_feature_set['features'].columns)
+                    predictions[col_name] = pd.DataFrame(clf.predict_proba(scaled_features))[1]
+            
+        else:
+            for test_feature_set in test_feature_sets:
+                # make predictions on the same set the model was trained on
+                if test_feature_set['name'] == model['features']:
+                    predictions[col_name] = pd.DataFrame(clf.predict_proba(test_feature_set['features']))[1]
+    
+    if append_features:
+        feature_sets = [feature_set['features'] for feature_set in test_feature_sets]
+        feature_sets.append(predictions)
+        final_features = pd.concat(feature_sets, axis=1)
+    else:
+        final_features = predictions
+    
+    final_predictions = final_classifier.predict(final_features)
+    
+    # If no name is provided for the resulting metrics row, create one.
+    if result_row_name is None:
+        final_row_name = "Algorithms: " + ', '.join(set([model['name'] for model in initial_models]))
+        final_row_name += ", with " + str(type(final_classifier)).split("'")[1].split('.')[-1]
+        if append_features:
+            final_row_name += " (with appended features)"
+    else:
+        final_row_name = result_row_name
+    
+    results = metrics(test_target, final_predictions).rename(index={0: final_row_name})
+    
+    return {'results': results,
+            'predictions': final_predictions}
