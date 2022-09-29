@@ -38,9 +38,16 @@ The notebooks should be ran in the following order:
 - `Import Text Data.ipynb` It reads the raw data files and converts them to `pandas.DataFrame`.
 - `Text Dataset Cleanup.ipynb` Some rudimentary processing (like removing empty rows) and creation
 of two datasets with 1:1 and 1:10 phishing to legitimate ratios.
-- `Text Data Preprocessing.ipynb` Conversion of the email strings to lemmatized lists of words.
+- `Text Data Preprocessing.ipynb` Conversion of the email strings to lemmatized lists of words for
+vectorization features and preprocessing for style features.
 - `Text Feature Extraction and Feature Selection.ipynb` Vectorization of the text features.
-- `Text Data Classification.ipynb` Algorithm training, predictions and evaluation metrics.
+- `Text Data Classification (baseline).ipynb` Baseline algorithm training, predictions and evaluation
+metrics using test features.
+- `Stylometric Feature Extraction and Feature Selection.ipynb` Extraction of stylometric features.
+- `Style Features Classification (baseline).ipynb` Baseline algorithm training, predictions and
+evaluation metrics using style features. 
+- `Style and Content Classification.ipynb` Final predictions and evaluation using feature set merging
+and model stacking.
 
-The python files (`raw_utils.py`, `preprocessing.py`, `features.py` and `machine_learning.py`) contain utility functions that are being used inside
-the notebooks.
+The python files (`raw_utils.py`, `preprocessing.py`, `features.py` and `machine_learning.py`) contain
+utility functions that are being used inside the notebooks.
