@@ -396,9 +396,9 @@ def separate_features_target(dataframe, num_cols_ignore=2, class_col_name='email
 """
 Missing Values
 """
-def impute_mean(train, test):
+def impute_missing(train, test, strategy='mean'):
     """
-    Fills the missing values of a dataset using the mean value.
+    Fills the missing values of a dataset using the provided strategy.
     
     The sklearn.SimpleImputer instance will be fitted on the train
     data and will be used to transform the test data too.
@@ -409,6 +409,9 @@ def impute_mean(train, test):
         The train set to process.
     test : pandas.DataFrame
         The test set to process.
+    strategy : {'mean', 'median', 'most_frequent'}
+        This parameter will be passed to SimpleImputer to determine
+        the imputation method.
         
     Returns
     -------
@@ -417,7 +420,7 @@ def impute_mean(train, test):
     test : pandas.DataFrame
         The imputed test set.
     """
-    imp_mean = SimpleImputer(missing_values=np.NaN, strategy='mean')
+    imp_mean = SimpleImputer(missing_values=np.NaN, strategy=strategy)
     
     train = pd.DataFrame(imp_mean.fit_transform(train), columns=train.columns)
     test = pd.DataFrame(imp_mean.transform(test), columns=train.columns)
