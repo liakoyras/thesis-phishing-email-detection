@@ -325,7 +325,7 @@ def confusion_matrix_values(true, predicted):
     
     return (tn, fp, fn, tp)
 
-def metrics(true, predicted):
+def metrics(true, predicted, probabilities):
     """
     Calculate evaluation metrics for a set of predictions.
     
@@ -338,7 +338,9 @@ def metrics(true, predicted):
     true : pandas.Series
         The Series with the correct class labels.
     predicted : pandas.Series or numpy.ndarray
-        The Series with the predicted class labels.
+        The predicted class labels.
+    probabilities : pandas.Series or numpy.ndarray
+        The predicted probabilities.
     
     Returns
     -------
@@ -358,7 +360,7 @@ def metrics(true, predicted):
     f1  = f1_score(true, predicted)
     fpr = fp / (fp + tn)
     fnr = fn / (tp + fn)
-    auc = roc_auc_score(true, predicted)
+    auc = roc_auc_score(true, probabilities)
     
     return pd.DataFrame({'Accuracy': [acc],
                           'Precision': [pre],
@@ -406,8 +408,9 @@ def results(model, test_features, test_target, scaler=None):
         test_features = pd.DataFrame(scaler.transform(test_features), columns=test_features.columns)
         
     predictions = model.predict(test_features)
+    probabilities = model.predict_proba(test_features)[:, 1]
                   
-    results = metrics(test_target, predictions)
+    results = metrics(test_target, predictions, probabilities)
 
     return {'results': results,
             'predictions': predictions}
@@ -776,6 +779,7 @@ def test_stacked_models(initial_models, test_feature_sets, test_target, final_cl
         final_features = predictions
     
     final_predictions = final_classifier.predict(final_features)
+    final_probabilities = final_classifier.predict_proba(final_features)[:, 1]
     
     # If no name is provided for the resulting metrics row, create one.
     if result_row_name is None:
@@ -786,7 +790,7 @@ def test_stacked_models(initial_models, test_feature_sets, test_target, final_cl
     else:
         final_row_name = result_row_name
     
-    results = metrics(test_target, final_predictions).rename(index={0: final_row_name})
+    results = metrics(test_target, final_predictions, final_probabilities).rename(index={0: final_row_name})
     
     return {'results': results,
             'predictions': final_predictions}
