@@ -594,6 +594,9 @@ def train_stacked_models(initial_models, train_feature_sets, train_target, final
     those predictions are used to train another classifier
     (by default Logistical Regression).
     
+    When LR is used for the final classifier, the data will also
+    be scaled using sklearn.StandardScaler.
+    
     When "predictions" are referenced, it means the probability
     of the phishing class that sklearn's predict_proba has
     returned.
@@ -632,8 +635,12 @@ def train_stacked_models(initial_models, train_feature_sets, train_target, final
         
     Returns
     -------
-    sklearn classifier object
-        The fitted stacking classifier.
+    dict
+    {'model': sklearn classifier object, 
+     'scaler': sklearn.preprocessing._data.StandardScaler or None}
+        A dictionary containing the fitted final classifier and the
+        scaler used for the standardization (if the classifier is
+        Logistic Regression).
         
     See Also
     --------
@@ -676,11 +683,18 @@ def train_stacked_models(initial_models, train_feature_sets, train_target, final
     if final_classifier is None:
         final_classifier = LogisticRegression(max_iter=1000, penalty='l2', C=1e10, random_state=alg_random_state)
     
+    if 'LogisticRegression' in str(type(final_classifier)):
+        scaler = StandardScaler().fit(final_features)
+        final_features = pd.DataFrame(scaler.transform(final_features), columns=final_features.columns)
+    else:
+        scaler = None
+    
     fitted_final_model = final_classifier.fit(final_features, train_target)
     
-    return fitted_final_model
+    return {'model': fitted_final_model, 
+            'scaler': scaler}
 
-def test_stacked_models(initial_models, test_feature_sets, test_target, final_classifier, exclude_models=[], append_features=False, result_row_name=None):
+def test_stacked_models(initial_models, test_feature_sets, test_target, final_model, exclude_models=[], append_features=False, result_row_name=None):
     """
     Evaluate a Stacking classifier with a test set.
     
@@ -718,8 +732,11 @@ def test_stacked_models(initial_models, test_feature_sets, test_target, final_cl
         initial_models.
     test_target : pandas.Series
         The Series with the target class variable.
-    final_classifier : sklearn classifier model
-        A fitted classifier to be used as the level 1 model.
+    final_model : dict
+        {'model': sklearn classifier object, 
+         'scaler': sklearn.preprocessing._data.StandardScaler or None}
+        A dictionary containing the fitted classifier to be used as
+        the level 1 model and the scaler that was used for training.
     exclude_models : list of {'lr', 'dt', 'rf', 'gb', 'nb'}
         If a list of the above strings is passed, any model found
         with those names will be excluded from the stacking (useful
@@ -778,13 +795,16 @@ def test_stacked_models(initial_models, test_feature_sets, test_target, final_cl
     else:
         final_features = predictions
     
-    final_predictions = final_classifier.predict(final_features)
-    final_probabilities = final_classifier.predict_proba(final_features)[:, 1]
+    if final_model['scaler'] is not None:
+        final_features = pd.DataFrame(final_model['scaler'].transform(final_features), columns=final_features.columns)
+    
+    final_predictions = final_model['model'].predict(final_features)
+    final_probabilities = final_model['model'].predict_proba(final_features)[:, 1]
     
     # If no name is provided for the resulting metrics row, create one.
     if result_row_name is None:
         final_row_name = "Algorithms: " + ', '.join(set([model['name'] for model in initial_models]))
-        final_row_name += ", with " + str(type(final_classifier)).split("'")[1].split('.')[-1]
+        final_row_name += ", with " + str(type(final_model['model'])).split("'")[1].split('.')[-1]
         if append_features:
             final_row_name += " (with appended features)"
     else:
