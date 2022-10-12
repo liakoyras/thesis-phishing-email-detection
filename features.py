@@ -137,7 +137,10 @@ def get_mean_vector(wordlist, word2vec_model):
 def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_count=5, max_vocab_size=None, workers=1):
     """
     Extract Word2Vec embedding features using gensim.
-
+    
+    It uses the skip-gram model that Word2Vec provides. This is
+    hardcoded (sg=1).
+    
     Word2Vec represents each word in the corpus as a high-dimensional
     vector. Then, get_mean_vector() is used to get the averages of
     the vectors of all the words in an email, after removing the
@@ -185,7 +188,7 @@ def word2vec_features(text_col_train, text_col_test=None, vector_size=100, min_c
     
     model = Word2Vec(sentences=text_col_train,
                      min_count=min_count, vector_size=vector_size, max_final_vocab=max_vocab_size,
-                     workers=workers, seed=1746)
+                     sg=1, workers=workers, seed=1746)
     
     vocab = list(model.wv.key_to_index.keys())
     
