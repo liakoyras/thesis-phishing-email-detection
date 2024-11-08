@@ -14,6 +14,9 @@ Structure section below.
 The results, along with some preliminary analysis are present in the outputs of
 the notebooks.
 
+**If you used the code or results in academic research or otherwise, please cite
+our paper. BibTex info at the end of Readme.**  
+
 ## Data
 In order to download the phishing data (from Jose Nazario's website):
 ```
@@ -72,3 +75,22 @@ The notebooks should be ran in the following order:
 The python files (`raw_utils.py`, `preprocessing.py`, `features.py` and
 `machine_learning.py`) contain utility functions that are being used inside the
 notebooks.
+
+## Citation
+```
+@article{Chanis2024,
+author={Ilias Chanis 
+and Avi Arampatzis},
+title={Enhancing phishing email detection with stylometric features and classifier stacking},
+journal={International Journal of Information Security},
+year={2024},
+month={Nov},
+day={07},
+volume={24},
+number={1},
+pages={15},
+issn={1615-5270},
+doi={10.1007/s10207-024-00928-7},
+url={https://doi.org/10.1007/s10207-024-00928-7}
+}
+```
